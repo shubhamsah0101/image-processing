@@ -1,9 +1,14 @@
 clc; clear all; close all;
 
 % input infrared image
-I = imread('manWalkIR.jpg');
-imshow(I);
+IR = imread('manWalkIR.jpg');
+imshow(IR);
 title('Original Image')
+
+% input visual image
+VIS = imread('manWalkVB.jpg');
+% imshow(VIS)
+% title('Original Visual Image')
 
 % Draw ROI interactively
 h = drawfreehand;
@@ -12,29 +17,25 @@ h = drawfreehand;
 mask = createMask(h);
 
 % Apply mask to keep original size
-if ndims(I) == 3 % RGB
-    maskedImage = I;
+if ndims(IR) == 3 % RGB
+    maskedImage = IR;
     maskedImage(repmat(~mask, [1 1 3])) = 0; % background black
 else % Grayscale
-    maskedImage = I;
+    maskedImage = IR;
     maskedImage(~mask) = 0;
 end
 
 % Display result
 figure;
 subplot(1, 2, 1)
-imshow(I)
+imshow(IR)
 title('Original Image')
 subplot(1, 2, 2)
 imshow(maskedImage)
 title('Mask Image')
 
 % Convert to gray scale for processing
-if ndims(maskedImage) == 3
-    grayImg = rgb2gray(maskedImage);
-else
-    grayImg = maskedImage;
-end
+grayImg = rgb2gray(maskedImage);
 
 % % % % % % % % % % % % % % % % % % % %
 % Code block for Salient Target Mask  %
@@ -59,24 +60,35 @@ imshow(bm)
 title('Background Mask')
 
 % element wise multiplication of sailent mask and infrared image
-
-% ---------- Apply STM to Original Image (direct multiplication) ----------
 stmLogical = stm > 0;   % convert 255→1, 0→0
 
-% if ndims(I) == 3
-%     % For RGB image, replicate mask across 3 channels
-%     stmLogical = repmat(stmLogical, [1 1 3]);
-% end
+greyI = rgb2gray(IR);
 
-greyI = rgb2gray(I);
-
-result = greyI .* uint8(stmLogical);   % element-wise multiply
+result1 = greyI .* uint8(stmLogical);   % element-wise multiply
 
 figure;
-imshow(result)
-title('Salient Target Region (Direct Multiplication)')
+imshow(result1)
+title('Salient Target mask X Infrared Image')
 
+% element wise multiplication of background mask and visible image
+bmLogic= bm > 0;
 
-% figure;
-% imshow(result)
-% title('Salient Target mask X Infrared Image')
+result2 = greyI .* uint8(bmLogic);
+
+figure;
+imshow(result2)
+title('Background Mask X Visible Image')
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % 
+% % % % % % % % % % % % % % % % % % % % % % % % % % 
+
+% Loss Function
+
+greyVIS = rgb2gray(VIS);
+
+Id = (stm .* greyVIS) + ((1 - stm) .* VIS);
+% thermal intarget -> (stm .* greyVIS)
+% 
+
+figure;
+imshow(Id)
