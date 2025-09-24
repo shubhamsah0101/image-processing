@@ -1,11 +1,9 @@
 clc; clear all; close all;
 
 % input infrared image
-I = imread('imgIf.png');
+I = imread('manWalkIR.jpg');
 imshow(I);
 title('Original Image')
-
-% input visual image
 
 % Draw ROI interactively
 h = drawfreehand;
@@ -22,9 +20,6 @@ else % Grayscale
     maskedImage(~mask) = 0;
 end
 
-% Ensure uint8
-maskedImage = im2uint8(maskedImage);
-
 % Display result
 figure;
 subplot(1, 2, 1)
@@ -34,67 +29,54 @@ subplot(1, 2, 2)
 imshow(maskedImage)
 title('Mask Image')
 
-% Convert to double for calculations  
-i_img = double(maskedImage);
-
-% size of image
-[m, n] = size(maskedImage);
+% Convert to gray scale for processing
+if ndims(maskedImage) == 3
+    grayImg = rgb2gray(maskedImage);
+else
+    grayImg = maskedImage;
+end
 
 % % % % % % % % % % % % % % % % % % % %
 % Code block for Salient Target Mask  %
 % % % % % % % % % % % % % % % % % % % %
 
-% transformed image
-stm = zeros(size(maskedImage));
+threshold = 80;
+stm = uint8(grayImg > threshold) * 255;
 
-for i = 1:m
-    for j = 1:n
-        if maskedImage(i,j) > 127
-            stm(i,j) = 255;
-        else
-            stm(i,j) = 0;
-        end
-    end
-end
-
-% Convert back to uint8 for image display
-% Salient Target Mask
-stm = uint8(stm);
-
-% figure;
-% imshow(stm)
-% title('Salient Target Mask')
+figure;
+imshow(stm)
+title('Salient Target Mask')
 
 % % % % % % % % % % % % % % % % % % % % 
 % Code block for Background Mask      %
 % % % % % % % % % % % % % % % % % % % %
 
 % transformed image
-bm = zeros(size(maskedImage));
+bm = uint8(grayImg < threshold) * 255;
 
-for i = 1:m
-    for j = 1:n
-        if maskedImage(i,j) < 127
-            bm(i,j) = 255;
-        else
-            bm(i,j) = 0;
-        end
-    end
-end
+figure;
+imshow(bm)
+title('Background Mask')
 
-% Salient Target Mask
-bm = uint8(bm);
+% element wise multiplication of sailent mask and infrared image
 
-% figure;
-% imshow(bm)
-% title('Background Mask')
+% ---------- Apply STM to Original Image (direct multiplication) ----------
+stmLogical = stm > 0;   % convert 255→1, 0→0
 
-stm = double(rgb2gray(stm));
-bm = double(rgb2gray(bm));
-I = double(I);
+% if ndims(I) == 3
+%     % For RGB image, replicate mask across 3 channels
+%     stmLogical = repmat(stmLogical, [1 1 3]);
+% end
 
-result = stm .* I;
-result = uint8(result);
+greyI = rgb2gray(I);
+
+result = greyI .* uint8(stmLogical);   % element-wise multiply
 
 figure;
 imshow(result)
+title('Salient Target Region (Direct Multiplication)')
+
+
+% figure;
+% imshow(result)
+% title('Salient Target mask X Infrared Image')
