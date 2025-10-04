@@ -2,7 +2,7 @@ clc; clear all; close all;
 
 % Load infrared and visible images
 IR = imread('manWalkIR.jpg');
-VIS = imread('manWalkVB.jpg');
+VIS = imread('manWalkIR_sharp.jpg');
 
 % Display original IR image
 figure;

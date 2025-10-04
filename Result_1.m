@@ -2,7 +2,7 @@ clc; clear all; close all;
 
 % Load infrared and visible images
 IR = imread('manWalkIR.jpg');
-VIS = imread('manWalkVB.jpg');
+VIS = imread('manWalkIR_sharp.jpg');
 
 % Display original IR image
 figure;
@@ -61,7 +61,7 @@ greyVIS = rgb2gray(VIS);
 
 % Final fusion using masks
 stmDouble = double(stm) / 255;
-VIS_double = double(VIS);
+VIS_double = double(rgb2gray(VIS));
 Id = uint8(stmDouble .* double(greyVIS) + (1 - stmDouble) .* VIS_double);
 
 % Ensure RGB format
