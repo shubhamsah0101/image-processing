@@ -92,3 +92,24 @@ Id = (stm .* greyVIS) + ((1 - stm) .* VIS);
 
 figure;
 imshow(Id)
+
+% Ensure both images are RGB
+if size(Id, 3) == 1
+    Id_rgb = cat(3, Id, Id, Id);  % convert grayscale to RGB
+else
+    Id_rgb = Id;
+end
+
+if size(maskedImage, 3) == 1
+    masked_rgb = cat(3, maskedImage, maskedImage, maskedImage);
+else
+    masked_rgb = maskedImage;
+end
+
+% Fuse using weighted average
+fusedFinal = uint8(0.5 * double(masked_rgb) + 0.5 * double(Id_rgb));
+
+% Display fused result
+figure;
+imshow(fusedFinal)
+title('Fused Masked Image + Final Output')
