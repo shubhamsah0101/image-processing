@@ -2,10 +2,10 @@ clc; clear all; close all;
 
 % Load infrared and visible images
 IR = imread('manWalkIR.jpg');
-VIS = imread('manWalkIR_sharp.jpg');
+VIS = imread('manWalkVB.jpg');
 
 % Display original IR image
-figure;
+figure(1)
 imshow(IR);
 title('Original Infrared Image');
 
@@ -13,7 +13,7 @@ title('Original Infrared Image');
 grayIR = rgb2gray(IR);
 
 % Display histogram
-figure;
+figure(2)
 imhist(grayIR);
 title('Histogram of Infrared Grayscale Image');
 
@@ -39,7 +39,7 @@ maskedIR = IR;
 maskedIR(repmat(~binaryMask, [1 1 3])) = 0;
 
 % Display masked IR image
-figure;
+figure(3)
 imshow(maskedIR);
 title('Masked IR Image (Auto ROI)');
 
@@ -48,20 +48,20 @@ stm = uint8(binaryMask) * 255;
 bm = uint8(~binaryMask) * 255;
 
 % Display masks
-figure;
+figure(4)
 subplot(1,2,1); imshow(stm); title('Salient Target Mask');
 subplot(1,2,2); imshow(bm); title('Background Mask');
 
 % Element-wise multiplication with IR image
 greyI = rgb2gray(IR);
 result1 = greyI .* uint8(binaryMask);
-figure;
+figure(5)
 imshow(result1);
 title('Salient × Infrared');
 
 % Element-wise multiplication with background mask
 result2 = greyI .* uint8(~binaryMask);
-figure;
+figure(6)
 imshow(result2);
 title('Background × Infrared');
 
@@ -87,9 +87,9 @@ else
 end
 
 % Final weighted fusion
-fusedFinal = uint8(0.5 * double(masked_rgb) + 0.5 * double(Id_rgb));
+fusedFinal = uint8(0.2 * double(masked_rgb) + 0.8 * double(Id_rgb));
 
 % Display final output
-figure;
+figure(7)
 imshow(fusedFinal);
 title('Final Fused Output (Auto ROI + Otsu)');

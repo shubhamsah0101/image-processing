@@ -1,0 +1,20 @@
+clc; clear all; close all;
+
+% final image
+image = imread('final_result.jpg');
+figure(1)
+imshow(image)
+title('Final Image')
+
+% histogram of final image
+pl = imhist(image);
+
+% number of gray levels
+L = length(pl);
+
+% entropy
+en = zeros(size(L));
+
+for i = 0:length(L)-1
+    en(i) = pl * log2()
+end

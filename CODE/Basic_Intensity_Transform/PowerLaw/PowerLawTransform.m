@@ -8,7 +8,7 @@ figure(1)
 imshow(img)
 title("Original Image")
 
-img = rgb2gray(img);
+% img = rgb2gray(img);
 
 % Transformed Image
 figure(2)

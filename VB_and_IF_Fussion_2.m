@@ -1,8 +1,4 @@
-% Purpose : Fusion of Visible Image and Infrared Image.
-
 clc; clear all; close all;
-
-% ----- Step - 1 : Creating Salient and Background Mask ----- %
 
 % Load infrared and visible images
 IR = imread('manWalkIR.jpg');
@@ -13,22 +9,30 @@ figure(1)
 imshow(IR);
 title('Original Infrared Image');
 
-% Convert IR and VB image to grayscale
+% Convert IR image to grayscale
 grayIR = rgb2gray(IR);
-grayVB = rgb2gray(VIS);
 
-% Display histogram for Infrared Image
+% Display histogram
 figure(2)
 imhist(grayIR);
 title('Histogram of Infrared Grayscale Image');
 
+% Apply Gaussian smoothing to reduce noise
+smoothedIR = imgaussfilt(grayIR, 2);  % sigma = 2
+
 % Compute Otsu threshold
-level = graythresh(grayIR);         % returns normalized threshold [0,1]
-threshold = round(level * 255);     % scale to [0,255]
+level = graythresh(smoothedIR);         % returns normalized threshold [0,1]
+threshold = round(level * 255);         % scale to [0,255]
 fprintf('Computed Otsu Threshold: %d\n', threshold);
 
 % Create binary mask using threshold
-binaryMask = grayIR > threshold;
+binaryMask = smoothedIR > threshold;
+
+% Morphological closing to fill gaps
+binaryMask = imclose(binaryMask, strel('disk', 5));  % fill small holes
+
+% Remove small fragments
+binaryMask = bwareaopen(binaryMask, 100);  % remove objects < 100 pixels
 
 % Apply mask to IR image
 maskedIR = IR;
@@ -48,25 +52,26 @@ figure(4)
 subplot(1,2,1); imshow(stm); title('Salient Target Mask');
 subplot(1,2,2); imshow(bm); title('Background Mask');
 
-% ----- Step - 2 : Fusion of both the Masks ----- %
-
 % Element-wise multiplication with IR image
-% greyI = rgb2gray(IR);
-result1 = grayIR .* uint8(stm);
+greyI = rgb2gray(IR);
+result1 = greyI .* uint8(binaryMask);
 figure(5)
 imshow(result1);
 title('Salient × Infrared');
 
 % Element-wise multiplication with background mask
-result2 = grayVB .* uint8(bm);
+result2 = greyI .* uint8(~binaryMask);
 figure(6)
 imshow(result2);
-title('Background × Visible');
+title('Background × Infrared');
+
+% Prepare visible image
+greyVIS = rgb2gray(VIS);
 
 % Final fusion using masks
 stmDouble = double(stm) / 255;
-VIS_double = double(grayVB);
-Id = uint8(stmDouble .* double(grayVB) + (1 - stmDouble) .* VIS_double);
+VIS_double = double(VIS);
+Id = uint8(stmDouble .* double(greyVIS) + (1 - stmDouble) .* VIS_double);
 
 % Ensure RGB format
 if size(Id, 3) == 1
@@ -89,16 +94,14 @@ figure(7)
 imshow(fusedFinal);
 title('Final Fused Output (Auto ROI + Otsu)');
 
-% ----- Step - 3 : Increasing the broghtness of Final Image ----- %
-
-% converting to gray scale
-image = rgb2gray(fusedFinal);
-figure(8)
-imshow(image)
-title('Gray Scale')
+% % converting to gray scale
+% image = rgb2gray(fusedFinal);
+% figure(8)
+% imshow(image)
+% title('Gray Scale')
 
 % increase brightness
-image = double(image);
+image = double(fusedFinal);
 c = 1;
 image_bright = c * log(1 + image);
 image_bright = mat2gray(image_bright); % Normalize
@@ -107,13 +110,13 @@ imshow(image_bright);
 title('Brighten')
 
 % denoise
-% image_denoise = imgaussfilt(image_bright, 2);
-% figure(4)
-% imshow(image_denoise);
-% title('Denoise')
+image_denoise = imgaussfilt(image_bright, 1);
+figure(10)
+imshow(image_denoise);
+title('Denoise')
 
 % sharpen
-image_sharp = imsharpen(image_bright, 'Radius', 2, 'Amount', 1);
-figure(10)
+image_sharp = imsharpen(image_denoise, 'Radius', 2, 'Amount', 1);
+figure(11)
 imshow(image_sharp);
 title('Sharp')
