@@ -35,5 +35,4 @@
 
 clc; clear all; close all;
 
-image = imread('manWalkVB.jpg');
-imshow(rgb2gray(image))
+image = imread('man')
