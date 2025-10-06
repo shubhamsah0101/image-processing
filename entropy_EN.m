@@ -6,6 +6,8 @@ figure(1)
 imshow(image)
 title('Final Image')
 
+image = double(image);
+
 % histogram of final image
 pl = imhist(image);
 
