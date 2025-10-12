@@ -3,8 +3,8 @@
 clc; clear all; close all;
 
 % Load infrared and visible images
-IR = imread("IR_meting012-1200_g.bmp");
-VIS = imread("VIS_meting012-1200_r.bmp");
+IR = imread("manWalkIR.jpg");
+VIS = imread("manWalkVB.jpg");
 
 % Display original IR image
 figure(1)
@@ -114,13 +114,13 @@ imshow(image_bright);
 title('Brighten');
 
 % Denoise
-image_denoise = imgaussfilt(image_bright, 1);
-figure(9)
-imshow(image_denoise);
-title('Denoise');
+% image_denoise = imgaussfilt(image_bright, 1);
+% figure(9)
+% imshow(image_denoise);
+% title('Denoise');
 
 % Sharpen
-image_sharp = imsharpen(image_denoise, 'Radius', 2, 'Amount', 1);
+image_sharp = imsharpen(image_bright, 'Radius', 2, 'Amount', 1);
 figure(10)
 imshow(image_sharp);
 title('Sharp');
