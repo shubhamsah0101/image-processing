@@ -8,11 +8,15 @@ VIS = imread("manWalkVB.jpg");
 
 % Display original IR image
 figure(1)
+subplot(1, 2, 1)
 imshow(IR);
 title('Original Infrared Image');
+subplot(1, 2, 2)
+imshow(VIS);
+title('Original Visible Image');
 
 % Convert IR to grayscale only for thresholding (safe for both RGB or gray)
-grayIR = im2gray(IR);  % ✅ replaces rgb2gray safely
+grayIR = im2gray(IR);  % replaces rgb2gray safely
 
 % Display histogram
 figure(2)
@@ -121,6 +125,6 @@ title('Brighten');
 
 % Sharpen
 image_sharp = imsharpen(image_bright, 'Radius', 2, 'Amount', 1);
-figure(10)
+figure(9)
 imshow(image_sharp);
 title('Sharp');
