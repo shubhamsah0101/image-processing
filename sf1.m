@@ -2,11 +2,11 @@ clc;
 clear;
 
 % Step 1: Read the image
-[filename, pathname] = uigetfile({'.jpg;.png;*.bmp','Image Files'}, 'Select an Image');
-if isequal(filename,0)
-    error('No image selected.');
-end
-img = imread(fullfile(pathname, filename));
+% [filename, pathname] = uigetfile({'.jpg;.png;*.bmp','Image Files'}, 'Select an Image');
+% if isequal(filename,0)
+%     error('No image selected.');
+% end
+img = imread("final_result.jpg");
 
 % Step 2: Convert to grayscale if it's RGB
 if size(img, 3) == 3

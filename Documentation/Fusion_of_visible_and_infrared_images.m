@@ -3,8 +3,8 @@
 clc; clear all; close all;
 
 % Load infrared and visible images
-IR = imread("manWalkIR.jpg");
-VIS = imread("manWalkVB.jpg");
+IR = imread("manwithbag.jpg");
+VIS = imread("manwithbag_vb.jpg");
 
 % Display original IR image
 figure(1)

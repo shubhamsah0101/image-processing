@@ -1,5 +1,5 @@
 % WITHOUT CONVERTING TO GRAY SCALE
-
+tic
 clc; clear all; close all;
 
 % Load infrared and visible images
@@ -128,3 +128,5 @@ image_sharp = imsharpen(image_bright, 'Radius', 2, 'Amount', 1);
 figure(9)
 imshow(image_sharp);
 title('Sharp');
+
+toc
