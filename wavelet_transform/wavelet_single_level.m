@@ -1,23 +1,4 @@
-% clc; clear all; close all;
-% 
-% % Read an image
-% img = imread('cameraman.tif'); % or your own image
-% img = im2double(img);
-% 
-% % Apply single-level 2D wavelet transform
-% [LL, LH, HL, HH] = dwt2(img, 'haar'); % you can use 'db1', 'sym4', etc.
-% 
-% % Display results
-% figure;
-% subplot(2,3,1); imshow(img, []); title('Original Image');
-% subplot(2,3,2); imshow(LL, []); title('Approximation (LL)');
-% subplot(2,3,3); imshow(LH, []); title('Horizontal Detail (LH)');
-% subplot(2,3,4); imshow(HL, []); title('Vertical Detail (HL)');
-% subplot(2,3,5); imshow(HH, []); title('Diagonal Detail (HH)');
-% 
-% % Reconstruct the image
-% reconstructed = idwt2(LL, LH, HL, HH, 'haar');
-% subplot(2,3,6); imshow(reconstructed, []); title('Reconstructed Image');
+% image fusion using Wavelet :-
 
 clc; clear all; close all;
 

@@ -1,3 +1,5 @@
+% Wavelet Transform of an Image :-
+
 clc; clear all; close all;
 
 % Read an image
