@@ -22,8 +22,8 @@ img = double(img);
 % Step 5: Compute Row Frequency (RF)
 rf_sum = 0;
 for i = 1:M
-    for j = 1:N-1
-        diff_val = img(i, j+1) - img(i, j);
+    for j = 1:N
+        diff_val = img(i, j) - img(i, j-1);
         rf_sum = rf_sum + diff_val^2;
     end
 end
@@ -32,8 +32,8 @@ RF = rf_sum / (M * N);
 % Step 6: Compute Column Frequency (CF)
 cf_sum = 0;
 for j = 1:N
-    for i = 1:M-1
-        diff_val = img(i+1, j) - img(i, j);
+    for i = 1:M
+        diff_val = img(i, j) - img(i-1, j);
         cf_sum = cf_sum + diff_val^2;
     end
 end

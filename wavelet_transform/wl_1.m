@@ -1,0 +1,27 @@
+clc; clear all; close all;
+
+% Read an image
+img = imread("manWalkVB.jpg");
+img = rgb2gray(img);    % im2double(img)
+
+% Apply single-level 2D wavelet transform
+[LL, LH, HL, HH] = dwt2(img, 'haar');
+
+% Reconstruct the image
+reconstructed = idwt2(LL, LH, HL, HH, 'haar');
+
+figure(1)
+subplot(1, 2, 1)
+imshow(img, []); title('Original Image')
+subplot(1, 2, 2)
+imshow(reconstructed, []); title('Reconstructed Image')
+
+figure(2)
+subplot(2, 2, 1)
+imshow(LL, []); title('Approximation (LL)')
+subplot(2, 2, 2)
+imshow(LH, []); title('Horizontal Detail (LH)')
+subplot(2, 2, 3)
+imshow(HL, []); title('Vertical Detail (HL)')
+subplot(2, 2, 4)
+imshow(HH, []); title('Diagonal Detail (HH)')
