@@ -30,22 +30,27 @@ A_ir  = appcoef2(ir_c, ir_s, wname, nLevels);
 A_fused = (A_vis + A_ir) / 2;
 
 % Start with fused approximation
-C_fused = [];
+% C_fused = [];
 
 % Reconstruct step-by-step from top level down
-for i = nLevels:-1:1
-    % Extract detail coefficients from both images
-    [H_vis, V_vis, D_vis] = detcoef2('all', vis_c, vis_s, i);
-    [H_ir,  V_ir,  D_ir]  = detcoef2('all', ir_c, ir_s, i);
+[H_vis, V_vis, D_vis] = detcoef2('all', vis_c, vis_s, 2);
+[H_ir,  V_ir,  D_ir]  = detcoef2('all', ir_c, ir_s, 2);
 
-    % Fuse details using max-absolute rule
-    H_f = (abs(H_vis) > abs(H_ir)).*H_vis + (abs(H_vis) <= abs(H_ir)).*H_ir;
-    V_f = (abs(V_vis) > abs(V_ir)).*V_vis + (abs(V_vis) <= abs(V_ir)).*V_ir;
-    D_f = (abs(D_vis) > abs(D_ir)).*D_vis + (abs(D_vis) <= abs(D_ir)).*D_ir;
 
-    % Reconstruct one level up
-    A_fused = idwt2(A_fused, H_f, V_f, D_f, wname);
-end
+
+% for i = nLevels:-1:1
+%     % Extract detail coefficients from both images
+%     [H_vis, V_vis, D_vis] = detcoef2('all', vis_c, vis_s, i);
+%     [H_ir,  V_ir,  D_ir]  = detcoef2('all', ir_c, ir_s, i);
+% 
+%     % Fuse details using max-absolute rule
+%     H_f = (abs(H_vis) > abs(H_ir)).*H_vis + (abs(H_vis) <= abs(H_ir)).*H_ir;
+%     V_f = (abs(V_vis) > abs(V_ir)).*V_vis + (abs(V_vis) <= abs(V_ir)).*V_ir;
+%     D_f = (abs(D_vis) > abs(D_ir)).*D_vis + (abs(D_vis) <= abs(D_ir)).*D_ir;
+% 
+%     % Reconstruct one level up
+%     A_fused = idwt2(A_fused, H_f, V_f, D_f, wname);
+% end
 
 % Final fused image
 fused_img = A_fused;
