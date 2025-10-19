@@ -18,3 +18,5 @@ MUTUAL INFORMATION :
 3. db10 -> 2.2232 ---------- MIN
 
 4. haar -> 2.8826
+
+

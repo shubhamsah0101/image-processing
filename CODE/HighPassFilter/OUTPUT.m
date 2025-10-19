@@ -1,5 +1,8 @@
+clc; clear all; close all;
+
 % original Image
-img = imread("manWalkVB_bright.jpg");
+img = imread("abc.jpg");
+img = double(img);
 figure(1)
 imshow(img)
 title("Original Image")
