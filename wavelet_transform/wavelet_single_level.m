@@ -3,8 +3,8 @@
 clc; clear all; close all;
 
 % Step 1: Read and preprocess images
-IR = imread("manWalkIR.jpg");
-VIS = imread("manWalkVB.jpg");
+IR = imread("sniper_IR.bmp");
+VIS = imread("sniper_vis.bmp");
 
 % Convert to grayscale if necessary
 if size(IR,3)==3
@@ -23,8 +23,8 @@ IR = im2double(IR);
 VIS = im2double(VIS);
 
 % Step 2: Apply single-level DWT
-[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db10');
-[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db10');
+[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2');
+[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2');
 
 % Step 3: Fuse coefficients
 LL_fused = (LL_IR + LL_VIS) / 2;           % average of approximations

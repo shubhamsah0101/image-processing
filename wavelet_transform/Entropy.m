@@ -3,7 +3,7 @@
 clc;clear all; close all;
 
 % Step 1: Read the image
-img = imread("fused_image_db2_multi_level.jpg");  % Replace with your image file
+img = imread("sniper_db2.jpg");  % Replace with your image file
 imshow(img)
 
 % Step 2: Convert to grayscale if it's RGB
