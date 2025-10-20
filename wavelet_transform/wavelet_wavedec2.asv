@@ -19,13 +19,13 @@ figure(1)
 subplot(1,2,1); imshow(IR, []); title('Infrared Image');
 subplot(1,2,2); imshow(VIS, []); title('Visible Image');
 
-% Multi-level wavelet decomposition
+% Step 2: Multi-level wavelet decomposition
 level = 2;
 waveletName = 'db2';
 [C_IR, S_IR] = wavedec2(IR, level, waveletName);
 [C_VIS, S_VIS] = wavedec2(VIS, level, waveletName);
 
-% Fuse coefficients
+% Step 3: Fuse coefficients
 C_fused = C_IR; % Start with IR coefficients
 
 % Fuse approximation (LL) coefficients
@@ -62,14 +62,14 @@ for i = 1:level
     start = start + num;
 end
 
-% Reconstruct fused image
+% Step 4: Reconstruct fused image
 Fused = waverec2(C_fused, S_IR, waveletName);
+
+% Step 5: Enhance and display
+Fused_eq = histeq(Fused);
 
 figure(2)
 imshow(Fused, []); title('Fused Image (Raw)');
-
-% Enhance and display
-Fused_eq = histeq(Fused);
 
 figure(3)
 imshow(Fused_eq, []); title('Fused Image (Enhanced)');
