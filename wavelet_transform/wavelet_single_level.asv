@@ -4,7 +4,7 @@ clc; clear all; close all;
 
 % Read and preprocess images
 IR = imread("manWalkIR.jpg");
-VIS = imread("manWalkVB.jpg");
+VIS = imread("sniper_vis.bmp");
 
 % Convert to grayscale if necessary
 if size(IR,3)==3
