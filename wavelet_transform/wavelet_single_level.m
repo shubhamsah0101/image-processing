@@ -6,6 +6,11 @@ clc; clear all; close all;
 IR = imread("manWalkIR.jpg");
 VIS = imread("manWalkVB.jpg");
 
+% original images
+figure(1)
+subplot(1,2,1); imshow(IR, []); title('Infrared Image');
+subplot(1,2,2); imshow(VIS, []); title('Visible Image');
+
 % Convert to grayscale if necessary
 if size(IR,3)==3
     IR = rgb2gray(IR);
@@ -13,7 +18,7 @@ end
 if size(VIS,3)==3
     VIS = rgb2gray(VIS);
 end
-
+    
 % Resize to same size
 [rows, cols] = size(IR);
 VIS = imresize(VIS, [rows cols]);
@@ -25,22 +30,6 @@ VIS = im2double(VIS);
 % Apply single-level DWT
 [LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2');
 [LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2');
-
-% Fuse coefficients
-LL_fused = (LL_IR + LL_VIS) / 2;           % average of approximations
-LH_fused = max(LH_IR, LH_VIS);             % max for detail coefficients
-HL_fused = max(HL_IR, HL_VIS);
-HH_fused = max(HH_IR, HH_VIS);
-
-% Reconstruct fused image
-Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
-
-% Display results
-
-% original images
-figure(1)
-subplot(1,2,1); imshow(IR, []); title('Infrared Image');
-subplot(1,2,2); imshow(VIS, []); title('Visible Image');
 
 % infrared image components
 figure(2)
@@ -55,6 +44,17 @@ subplot(2,2,1); imshow(LL_VIS, []); title('Approximation (LL)');
 subplot(2,2,2); imshow(LH_VIS, []); title('Horizontal Detail (LH)');
 subplot(2,2,3); imshow(HL_VIS, []); title('Vertical Detail (HL)');
 subplot(2,2,4); imshow(HH_VIS, []); title('Diagonal Detail (HH)');
+
+% Fuse coefficients
+LL_fused = (LL_IR + LL_VIS) / 2;           % average of approximations
+LH_fused = max(LH_IR, LH_VIS);             % max for detail coefficients
+HL_fused = max(HL_IR, HL_VIS);
+HH_fused = max(HH_IR, HH_VIS);
+
+% Reconstruct fused image
+Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
+
+% Display results
 
 % fused image
 figure(4)
