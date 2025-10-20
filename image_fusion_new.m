@@ -1,13 +1,15 @@
 clc; clear; close all;
 
-% Step 1: Load Input Images
+% Load Input Images
 IR = imread('manWalkIR.jpg');
 VIS = imread('manWalkVB.jpg');
-figure, imshow(IR); title('Original Infrared Image');
+figure(1)
+imshow(IR); title('Original Infrared Image');
 
-% Step 2: Preprocess Infrared Image
+% Preprocess Infrared Image
 grayIR = rgb2gray(IR);
-figure, imhist(grayIR); title('Histogram of Infrared Grayscale Image');
+figure(2)
+imhist(grayIR); title('Histogram of Infrared Grayscale Image');
 
 smoothedIR = imgaussfilt(grayIR, 2);  % Gaussian smoothing
 level = graythresh(smoothedIR);      % Otsu threshold
@@ -18,27 +20,30 @@ binaryMask = smoothedIR > threshold;
 binaryMask = imclose(binaryMask, strel('disk', 5));   % Fill gaps
 binaryMask = bwareaopen(binaryMask, 100);             % Remove small fragments
 
-% Step 3: Apply Mask to IR Image
+% Apply Mask to IR Image
 maskedIR = IR;
 maskedIR(repmat(~binaryMask, [1 1 3])) = 0;
-figure, imshow(maskedIR); title('Masked IR Image (Auto ROI)');
+figure(3)
+imshow(maskedIR); title('Masked IR Image (Auto ROI)');
 
-% Step 4: Create STM and BM Masks
+% Create STM and BM Masks
 stm = uint8(binaryMask) * 255;
 bm = uint8(~binaryMask) * 255;
 
-figure;
+figure(4)
 subplot(1,2,1); imshow(stm); title('Salient Target Mask');
 subplot(1,2,2); imshow(bm); title('Background Mask');
 
 greyI = rgb2gray(IR);
 result1 = greyI .* uint8(binaryMask);
-figure, imshow(result1); title('Salient × Infrared');
+figure(5)
+imshow(result1); title('Salient × Infrared');
 
 result2 = greyI .* uint8(~binaryMask);
-figure, imshow(result2); title('Background × Infrared');
+figure(6)
+imshow(result2); title('Background × Infrared');
 
-% Step 5: Visible Image Fusion
+% Visible Image Fusion
 greyVIS = rgb2gray(VIS);
 stmDouble = double(stm) / 255;
 VIS_double = double(VIS);
@@ -58,19 +63,21 @@ else
     masked_rgb = maskedIR;
 end
 
-% Step 6: Final Fusion
+% Final Fusion
 fusedFinal = uint8(0.5 * double(masked_rgb) + 0.5 * double(Id_rgb));
-figure, imshow(fusedFinal); title('Final Fused Output (Auto ROI + Otsu)');
+figure(7)
+imshow(fusedFinal); title('Final Fused Output (Auto ROI + Otsu)');
 
-% Step 7: Simulated Convolutional Enhancement
+% Simulated Convolutional Enhancement
 conv1x1_1 = fusedFinal;                     % Simulated 1×1 conv
 conv3x3 = imgaussfilt(conv1x1_1, 1);        % Simulated 3×3 conv
 conv1x1_2 = conv3x3;                        % Simulated 1×1 conv
 
 convEnhanced = uint8(0.5 * double(fusedFinal) + 0.5 * double(conv1x1_2));
-figure, imshow(convEnhanced); title('Simulated Convolutional Enhancement Output');
+figure(8)
+imshow(convEnhanced); title('Simulated Convolutional Enhancement Output');
 
-% Step 8: Loss Function Evaluation
+% Loss Function Evaluation
 fusedGray = rgb2gray(convEnhanced);
 refGray = rgb2gray(VIS);  % Reference can be VIS, IR, or maskedIR
 
