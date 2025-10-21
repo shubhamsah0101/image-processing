@@ -3,7 +3,8 @@
 clc;clear all; close all;
 
 % Step 1: Read the image
-img = imread("fused_image_wavedec2_level_2_enhanced.jpg");  % Replace with your image file
+img = imread("abc.jpg");  % Replace with your image file
+% img = imread("final_new.jpg");
 imshow(img)
 
 % Step 2: Convert to grayscale if it's RGB
