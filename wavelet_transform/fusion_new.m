@@ -27,10 +27,12 @@ maskedIR(repmat(~binaryMask, [1 1 3])) = 0;
 figure(3)
 imshow(maskedIR); title('Masked IR Image (Auto ROI)');
 
-maskedVIS = VIS;
-maskedVIS(repmat(~binaryMask, [1 1 3])) = 0;
-figure(4)
-imshow(maskedVIS); title('Masked VIS Image (Auto ROI)');
+% maskedVIS = VIS;
+% maskedVIS(repmat(~binaryMask, [1 1 3])) = 0;
+% figure(4)
+% imshow(maskedVIS); title('Masked VIS Image (Auto ROI)');
+
+
 
 figure(5)
 imshow(binaryMask); title('Binary Mask');
@@ -41,81 +43,89 @@ mIR = im2double(maskedIR);
 mVIS = im2double(maskedIR);
 
 % Apply single-level DWT
-[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(mIR, 'db2', 2);
-[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(mVIS, 'db2', 2);
+[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(mIR, 'db2');
+[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(mVIS, 'db2');
 
 % Fuse approximation coefficients as average
-LL_fused = (0.6*LL_IR + 0.4*LL_VIS);
+% LL_fused = (0.6*LL_IR + 0.4*LL_VIS);
 
 % Compute variances of detail coefficients
-var_LH_IR = var(LH_IR(:));
-var_LH_VIS = var(LH_VIS(:));
-var_HL_IR = var(HL_IR(:));
-var_HL_VIS = var(HL_VIS(:));
-var_HH_IR = var(HH_IR(:));
-var_HH_VIS = var(HH_VIS(:));
+% var_LH_IR = var(LH_IR(:));
+% var_LH_VIS = var(LH_VIS(:));
+% var_HL_IR = var(HL_IR(:));
+% var_HL_VIS = var(HL_VIS(:));
+% var_HH_IR = var(HH_IR(:));
+% var_HH_VIS = var(HH_VIS(:));
 
 % Fuse detail coefficients by selecting based on higher variance
-if var_LH_IR > var_LH_VIS
-    LH_fused = LH_IR;
-else
-    LH_fused = LH_VIS;
-end
+% if var_LH_IR > var_LH_VIS
+%     LH_fused = LH_IR;
+% else
+%     LH_fused = LH_VIS;
+% end
+% 
+% if var_HL_IR > var_HL_VIS
+%     HL_fused = HL_IR;
+% else
+%     HL_fused = HL_VIS;
+% end
+% 
+% if var_HH_IR > var_HH_VIS
+%     HH_fused = HH_IR;
+% else
+%     HH_fused = HH_VIS;
+% end
 
-if var_HL_IR > var_HL_VIS
-    HL_fused = HL_IR;
-else
-    HL_fused = HL_VIS;
-end
 
-if var_HH_IR > var_HH_VIS
-    HH_fused = HH_IR;
-else
-    HH_fused = HH_VIS;
-end
+LL_VIS = rgb2gray(LL_VIS);
+LL_IR = rgb2gray(LL_IR);
+
 
 % 3. Fusion based on STDFusionNet :-
-
+fusedFinal = uint8(double(LL_VIS) + double(LL_IR));
+figure(7)
+imshow(fusedFinal); title('Final Fused Output (Auto ROI + Otsu)');
 
 
 % 4. Entropy
-% Step 1: Read the image
-img = imread("abc.jpg");
-imshow(img)
-
-% Step 2: Convert to grayscale if it's RGB
-if size(img, 3) == 3
-    img = rgb2gray(img);
-end
-
-% Step 3: Normalize image to [0, 1]
-img = double(img) / 255;
-
-% Step 4: Compute histogram
-numBins = 256;
-counts = imhist(img, numBins);
-probs = counts / sum(counts);
-
-% Step 5: Remove zero entries to avoid log(0)
-probs(probs == 0) = [];
-
-% Step 6: Compute entropy
-entropyValue = -sum(probs .* log2(probs));
-
-% Step 7: Display result
-fprintf('\n\nEntropy of the image: %.4f\n', entropyValue);
-
-% 5. Mutual Information :-
-% Compute MI for IR image
-MI_IR = computeMI(IR, "abc.jpg");
-
-% Compute MI for VB image
-MI_VB = computeMI(VIS, "abc.jpg");
-
-% Final MI sum
-MIFinal = MI_IR + MI_VB;
-
-% Display results
-fprintf('\n\nMutual Information (IR vs Fused): %.4f\n', MI_IR);
-fprintf('Mutual Information (VB vs Fused): %.4f\n', MI_VB);
-fprintf('Combined Mutual Information: %.4f\n', MIFinal);
+% Read the image
+% img = imread("abc.jpg");
+% imshow(img)
+% 
+% % Convert to grayscale if it's RGB
+% if size(img, 3) == 3
+%     img = rgb2gray(img);
+% end
+% 
+% % Normalize image to [0, 1]
+% img = double(img) / 255;
+% 
+% % Compute histogram
+% numBins = 256;
+% counts = imhist(img, numBins);
+% probs = counts / sum(counts);
+% 
+% % Remove zero entries to avoid log(0)
+% probs(probs == 0) = [];
+% 
+% % Compute entropy
+% entropyValue = -sum(probs .* log2(probs));
+% 
+% % Display result
+% fprintf('\n\nEntropy of the image: %.4f\n', entropyValue);
+% 
+% 
+% % 5. Mutual Information :-
+% % Compute MI for IR image
+% MI_IR = computeMI(IR, "abc.jpg");
+% 
+% % Compute MI for VB image
+% MI_VB = computeMI(VIS, "abc.jpg");
+% 
+% % Final MI sum
+% MIFinal = MI_IR + MI_VB;
+% 
+% % Display results
+% fprintf('\n\nMutual Information (IR vs Fused): %.4f\n', MI_IR);
+% fprintf('Mutual Information (VB vs Fused): %.4f\n', MI_VB);
+% fprintf('Combined Mutual Information: %.4f\n', MIFinal);

@@ -3,8 +3,8 @@
 clc; clear all; close all;
 
 % Read an image
-img = imread("IR_meting012-1200_g.bmp");
-% img = rgb2gray(img);    
+img = imread("binary_x_vb.jpg");
+img = rgb2gray(img);    
 img = im2double(img);
 
 % Apply single-level 2D wavelet transform
