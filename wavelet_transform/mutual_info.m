@@ -2,11 +2,9 @@ clc; clear all; close all;
 
 % Compute MI for IR image
 MI_IR = computeMI("manWalkIR.jpg", "abc.jpg");
-% MI_IR = computeMI("manWalkIR.jpg", "final_new.jpg");
 
 % Compute MI for VB image
 MI_VB = computeMI("manWalkVB.jpg", "abc.jpg");
-% MI_VB = computeMI("manWalkVB.jpg", "final_new.jpg");
 
 % Final MI sum
 MIFinal = MI_IR + MI_VB;
