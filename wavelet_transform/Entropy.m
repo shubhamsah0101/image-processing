@@ -3,7 +3,8 @@
 clc;clear all; close all;
 
 % Step 1: Read the image
-img = imread("abc.jpg");  % Replace with your image file
+img = imread("dwt_db2_final.jpg");  % dwt only
+% img = imread("wavelet_std_result.jpg");   % dwt with STDFusionNet
 imshow(img)
 
 % Step 2: Convert to grayscale if it's RGB

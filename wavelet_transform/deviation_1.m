@@ -3,7 +3,7 @@ clc;clear all;close all;
 % dv = (1/MN) * (infra - fuse)/ infra;
 
 infra_image = imread("manWalkIR.jpg");
-fused_image = imread("abc.jpg");
+fused_image = imread("result_new.jpg");
 
 infra_gray = rgb2gray(infra_image);
 fused_gray = rgb2gray(fused_image);
@@ -18,4 +18,4 @@ end
 
 final = (1 / (m*n)) * value;
 
-disp(final)
+fprintf('Deviation : %e\n', final)

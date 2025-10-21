@@ -1,6 +1,5 @@
 clc; clear; close all;
 
-% 1. Creating Binary Mask and applying it to infrared and visible image
 % Load Input Images
 IR = imread('manWalkIR.jpg');
 VIS = imread('manWalkVB.jpg');
@@ -21,70 +20,13 @@ binaryMask = smoothedIR > threshold;
 binaryMask = imclose(binaryMask, strel('disk', 5));   % Fill gaps
 binaryMask = bwareaopen(binaryMask, 100);             % Remove small fragments
 
-% Apply Mask to IR Image and VIS Image
+% Apply Mask to IR Image
 maskedIR = IR;
 maskedIR(repmat(~binaryMask, [1 1 3])) = 0;
 figure(3)
 imshow(maskedIR); title('Masked IR Image (Auto ROI)');
 
-% maskedVIS = VIS;
-% maskedVIS(repmat(~binaryMask, [1 1 3])) = 0;
-% figure(4)
-% imshow(maskedVIS); title('Masked VIS Image (Auto ROI)');
-
-
-
-figure(5)
-imshow(binaryMask); title('Binary Mask');
-
-% 2. apply dwt:
-% Convert to double precision for processing
-mIR = im2double(maskedIR);
-mVIS = im2double(maskedIR);
-
-% Apply single-level DWT
-[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(mIR, 'db2');
-[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(mVIS, 'db2');
-
-% Fuse approximation coefficients as average
-% LL_fused = (0.6*LL_IR + 0.4*LL_VIS);
-
-% Compute variances of detail coefficients
-% var_LH_IR = var(LH_IR(:));
-% var_LH_VIS = var(LH_VIS(:));
-% var_HL_IR = var(HL_IR(:));
-% var_HL_VIS = var(HL_VIS(:));
-% var_HH_IR = var(HH_IR(:));
-% var_HH_VIS = var(HH_VIS(:));
-
-% Fuse detail coefficients by selecting based on higher variance
-% if var_LH_IR > var_LH_VIS
-%     LH_fused = LH_IR;
-% else
-%     LH_fused = LH_VIS;
-% end
-% 
-% if var_HL_IR > var_HL_VIS
-%     HL_fused = HL_IR;
-% else
-%     HL_fused = HL_VIS;
-% end
-% 
-% if var_HH_IR > var_HH_VIS
-%     HH_fused = HH_IR;
-% else
-%     HH_fused = HH_VIS;
-% end
-
-
-LL_VIS = rgb2gray(LL_VIS);
-LL_IR = rgb2gray(LL_IR);
-
-
-% 3. Fusion based on STDFusionNet :-
-fusedFinal = uint8(double(LL_VIS) + double(LL_IR));
-figure(7)
-imshow(fusedFinal); title('Final Fused Output (Auto ROI + Otsu)');
+% dwt of ir
 
 
 % 4. Entropy
