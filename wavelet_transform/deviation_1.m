@@ -3,7 +3,7 @@ clc;clear all;close all;
 % dv = (1/MN) * (infra - fuse)/ infra;
 
 infra_image = imread("manWalkIR.jpg");
-fused_image = imread("dwt_db2_final.jpg");  % dwt only
+fused_image = imread("pic.jpg");  % dwt only
 % fused_image = imread("wavelet_std_result.jpg");   % dwt with STDFusionNet
 
 infra_gray = rgb2gray(infra_image);

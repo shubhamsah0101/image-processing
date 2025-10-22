@@ -3,7 +3,7 @@
 clc;clear all; close all;
 
 % Step 1: Read the image
-img = imread("dwt_db2_final.jpg");  % dwt only
+img = imread("pic.jpg");  % dwt only
 % img = imread("wavelet_std_result.jpg");   % dwt with STDFusionNet
 imshow(img)
 

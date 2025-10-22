@@ -28,8 +28,8 @@ IR = im2double(IR);
 VIS = im2double(VIS);
 
 % Apply single-level DWT
-[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2', 2);
-[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2', 2);
+[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2');
+[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2');
 
 % Display wavelet components for infrared image
 figure(2)
@@ -80,5 +80,5 @@ Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
 
 % Display fused image
 figure(4)
-imshow(Fused, [])
-title("Fused Image using Variance-based Fusion for Details");
+imshow(Fused, []);
+title("Fused Image using Variance-based Fusion for Details")
