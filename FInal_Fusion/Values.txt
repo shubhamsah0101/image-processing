@@ -1,0 +1,31 @@
+A. Without Sharpening :-
+
+1. Entropy : 6.8345
+
+2. Spatial Frequency : 0.0285 
+
+3. Deviation : 1.084011e-06
+
+4. Mutual Information : 3.3864
+
+5. SSIM Loss : 0.2848
+
+6. Gradient Loss : 0.0002
+
+-----------------------------------------------
+
+B. Without Sharpening :-
+
+1. Entropy : 
+
+2. Spatial Frequency : 
+
+3. Deviation : 
+
+4. Mutual Information : 
+
+5. SSIM Loss : 
+
+6. Gradient Loss : 
+
+----------------------------------------------
