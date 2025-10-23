@@ -2,7 +2,7 @@ clc; clear all; close all;
 
 % Load Input Images
 IR = imread('manWalkIR.jpg');
-FuseImg = imread("pic2.jpg");
+FuseImg = imread("result_new.jpg");
 FuseImg = imresize(FuseImg, [300 300]);
 
 IR = double(rgb2gray(IR));
@@ -34,7 +34,7 @@ clc; clear all; close all;
 
 % Load Input Images
 IR = imread('manWalkVB.jpg');
-FuseImg = imread('pic2.jpg');
+FuseImg = imread("result_new_2.jpg");
 
 % Convert to grayscale and double
 IR = double(rgb2gray(IR));
