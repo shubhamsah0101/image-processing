@@ -46,7 +46,7 @@ subplot(2,2,3); imshow(HL_VIS, []); title('Vertical Detail (HL) VIS');
 subplot(2,2,4); imshow(HH_VIS, []); title('Diagonal Detail (HH) VIS');
 
 % Fuse approximation coefficients as average
-LL_fused = (0.6*LL_IR + 0.4*LL_VIS);
+LL_fused = (0.5*LL_IR + 0.5*LL_VIS);
 
 % Compute variances of detail coefficients
 var_LH_IR = var(LH_IR(:));
