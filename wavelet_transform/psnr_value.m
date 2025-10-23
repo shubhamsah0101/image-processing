@@ -2,39 +2,7 @@ clc; clear all; close all;
 
 % Load Input Images
 IR = imread('manWalkIR.jpg');
-FuseImg = imread("pic2.jpg");
-FuseImg = imresize(FuseImg, [300 300]);
-
-IR = double(rgb2gray(IR));
-FuseImg = double(rgb2gray(FuseImg));
-
-[m, n] = size(FuseImg);
-
-% rmse
-for i = 1:m
-    for j = 1:n
-        value = (IR(i, j) - FuseImg(i, j)) .^ 2;
-    end
-end
-
-result = sqrt(value ./ m*n);
-
-% psnr
-
-pmaxI = max(max(IR));
-pmaxF = max(max(FuseImg));
-
-ps = 10 * log10((pmaxF^2 - pmaxI^2) ./ result);
-
-
-
-
-
-clc; clear all; close all;
-
-% Load Input Images
-IR = imread('manWalkVB.jpg');
-FuseImg = imread('pic2.jpg');
+FuseImg = imread("fused_image_db2_dwt.jpg");
 
 % Convert to grayscale and double
 IR = double(rgb2gray(IR));
