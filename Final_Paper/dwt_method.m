@@ -75,6 +75,20 @@ end
 
 % Reconstruct fused image from fused coefficients
 Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
+% Fused = uint8(Fused);
+en = entropy(im2gray(Fused));
+% 
+fusedUint8 = im2uint8(Fused);
+% irGrayResized = imresize(rgb2gray(IR), size(fusedUint8));
+% irUint8 = im2uint8(irGrayResized);
+% 
+ssimVal = ssim(fusedUint8, uint8(IR));
+psnrVal = psnr(fusedUint8, uint8(IR));
+
+fprintf('\n--- Fusion Quality Metrics ---\n');
+fprintf('Entropy: %.4f\n', en);
+fprintf('SSIM: %.4f\n', ssimVal);
+fprintf('PSNR: %.4f dB\n', psnrVal);
 
 % Display fused image
 figure(4)

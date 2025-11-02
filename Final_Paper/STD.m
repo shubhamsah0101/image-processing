@@ -135,7 +135,20 @@ figure, imshow(fusedFinalGray, []); title('Final Fused Output (Gray IR + Gray VI
 % conv1x1_2 = conv3x3;                        % Simulated 1×1 conv
 % convEnhanced = uint8(0.5 * double(fusedFinalGray) + 0.5 * double(conv1x1_2));
 % figure, imshow(convEnhanced, []); title('Simulated Convolutional Enhancement Output');
-en=entropy(fusedFinalGray);
+% en=entropy(fusedFinalGray);
+en = entropy(fusedFinalGray);
+
+fusedUint8 = im2uint8(fusedFinalGray);
+irGrayResized = imresize(rgb2gray(IR), size(fusedUint8));
+irUint8 = im2uint8(irGrayResized);
+
+ssimVal = ssim(fusedUint8, irUint8);
+psnrVal = psnr(fusedUint8, irUint8);
+
+fprintf('\n--- Fusion Quality Metrics ---\n');
+fprintf('Entropy: %.4f\n', en);
+fprintf('SSIM: %.4f\n', ssimVal);
+fprintf('PSNR: %.4f dB\n', psnrVal);
 %% Step 7: Loss Function Evaluation
 fusedGray = fusedFinalGray;
 refGray = rgb2gray(VIS);  % Reference can be VIS, IR, or maskedIR
