@@ -1,96 +1,74 @@
 clc; clear all; close all;
 
 % Read and preprocess images
-IR = imread("manWalkIR.jpg");
-VIS = imread("manWalkVB.jpg");
+IR = imread("IR_lake_g.bmp");
+VIS = imread("VIS_lake_r.bmp");
 
-% Original images display
+% Show originals
 figure(1)
 subplot(1,2,1); imshow(IR, []); title('Infrared Image');
 subplot(1,2,2); imshow(VIS, []); title('Visible Image');
 
 % Convert to grayscale if necessary
-if size(IR,3) == 3
-    IR = rgb2gray(IR);
-end
-if size(VIS,3) == 3
-    VIS = rgb2gray(VIS);
-end
+if size(IR,3) == 3, IR = rgb2gray(IR); end
+if size(VIS,3) == 3, VIS = rgb2gray(VIS); end
 
-% Resize visible image to match IR dimensions
-[rows, cols] = size(IR);
-VIS = imresize(VIS, [rows cols]);
+% Resize visible to IR size
+VIS = imresize(VIS, size(IR));
 
-% Convert to double precision for processing
+% Convert to double
 IR = im2double(IR);
 VIS = im2double(VIS);
 
-% Apply single-level DWT
-[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2',2);
-[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2',2);
+% ------------- DWT -------------
+[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2', 2);
+[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2', 2);
 
-% Display wavelet components for infrared image
-figure(2)
-subplot(2,2,1); imshow(LL_IR, []); title('Approximation (LL) IR');
-subplot(2,2,2); imshow(LH_IR, []); title('Horizontal Detail (LH) IR');
-subplot(2,2,3); imshow(HL_IR, []); title('Vertical Detail (HL) IR');
-subplot(2,2,4); imshow(HH_IR, []); title('Diagonal Detail (HH) IR');
+% Fuse LL by averaging
+LL_fused = (LL_IR + LL_VIS) / 2;
 
-% Display wavelet components for visible image
-figure(3)
-subplot(2,2,1); imshow(LL_VIS, []); title('Approximation (LL) VIS');
-subplot(2,2,2); imshow(LH_VIS, []); title('Horizontal Detail (LH) VIS');
-subplot(2,2,3); imshow(HL_VIS, []); title('Vertical Detail (HL) VIS');
-subplot(2,2,4); imshow(HH_VIS, []); title('Diagonal Detail (HH) VIS');
+% Fuse detail coefficients by variance
+LH_fused = LH_IR; if var(LH_VIS(:)) > var(LH_IR(:)), LH_fused = LH_VIS; end
+HL_fused = HL_IR; if var(HL_VIS(:)) > var(HL_IR(:)), HL_fused = HL_VIS; end
+HH_fused = HH_IR; if var(HH_VIS(:)) > var(HH_IR(:)), HH_fused = HH_VIS; end
 
-% Fuse approximation coefficients as average
-LL_fused = (0.5*LL_IR + 0.5*LL_VIS);
-
-% Compute variances of detail coefficients
-var_LH_IR = var(LH_IR(:));
-var_LH_VIS = var(LH_VIS(:));
-var_HL_IR = var(HL_IR(:));
-var_HL_VIS = var(HL_VIS(:));
-var_HH_IR = var(HH_IR(:));
-var_HH_VIS = var(HH_VIS(:));
-
-% Fuse detail coefficients by selecting based on higher variance
-if var_LH_IR > var_LH_VIS
-    LH_fused = LH_IR;
-else
-    LH_fused = LH_VIS;
-end
-
-if var_HL_IR > var_HL_VIS
-    HL_fused = HL_IR;
-else
-    HL_fused = HL_VIS;
-end
-
-if var_HH_IR > var_HH_VIS
-    HH_fused = HH_IR;
-else
-    HH_fused = HH_VIS;
-end
-
-% Reconstruct fused image from fused coefficients
+% ------------- Reconstruct fused image -------------
 Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
-% Fused = uint8(Fused);
-en = entropy(im2gray(Fused));
-% 
+Fused = mat2gray(Fused);
 fusedUint8 = im2uint8(Fused);
-% irGrayResized = imresize(rgb2gray(IR), size(fusedUint8));
-% irUint8 = im2uint8(irGrayResized);
-% 
-ssimVal = ssim(fusedUint8, uint8(IR));
-psnrVal = psnr(fusedUint8, uint8(IR));
 
-fprintf('\n--- Fusion Quality Metrics ---\n');
-fprintf('Entropy: %.4f\n', en);
-fprintf('SSIM: %.4f\n', ssimVal);
-fprintf('PSNR: %.4f dB\n', psnrVal);
+% ================= QUALITY METRICS =================
 
-% Display fused image
-figure(4)
-imshow(Fused, [])
-title("Fused Image using Variance-based Fusion for Details")
+% -------- Ensure fused image matches IR size --------
+Fused = imresize(Fused, size(IR));
+fusedUint8 = im2uint8(Fused);
+
+% 1. Entropy
+EntropyVal = entropy(Fused);
+
+% 2. Spatial Frequency
+Fx = diff(Fused,1,2);
+Fy = diff(Fused,1,1);
+SF = sqrt(mean(Fx(:).^2) + mean(Fy(:).^2));
+
+% 3. Standard Deviation
+Deviation = std(Fused(:));
+
+% 4. PSNR
+PSNRval = psnr(fusedUint8, im2uint8(IR));
+
+% 5. SSIM
+SSIMval = ssim(fusedUint8, im2uint8(IR));
+
+% Print results
+fprintf('\n=== FUSION METRICS ===\n');
+fprintf('Entropy          : %.4f\n', EntropyVal);
+fprintf('Spatial Frequency: %.4f\n', SF);
+fprintf('PSNR             : %.4f dB\n', PSNRval);
+fprintf('Std Deviation    : %.4f\n', Deviation);
+fprintf('SSIM             : %.4f\n\n', SSIMval);
+
+% Show fused image
+figure(2)
+imshow(Fused, []);
+title("Fused Image (Variance-based DWT)");

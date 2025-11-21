@@ -132,13 +132,11 @@ ssim_vi = ssim(fused_gray, vi_resized);
 % Display results
 % ----------------------------
 fprintf('--- Hybrid STD + DWT Fusion Metrics ---\n');
-fprintf('PSNR (Fused vs IR): %.4f dB\n', psnr_ir);
-fprintf('PSNR (Fused vs VI): %.4f dB\n', psnr_vi);
 fprintf('Entropy (Fused): %.4f\n', entropy_fused);
-fprintf('Std Deviation (Fused): %.4f\n', std_fused);
 fprintf('Spatial Frequency (Fused): %.4f\n', SF);
+fprintf('PSNR (Fused vs IR): %.4f dB\n', psnr_ir);
+fprintf('Std Deviation (Fused): %.4f\n', std_fused);
 fprintf('SSIM (Fused vs IR): %.4f\n', ssim_ir);
-fprintf('SSIM (Fused vs VI): %.4f\n', ssim_vi);
 
 % ----------------------------
 % Visualization

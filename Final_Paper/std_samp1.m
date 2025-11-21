@@ -7,8 +7,8 @@ clear; clc; close all;
 % ----------------------------
 % Load images
 % ----------------------------
-ir = im2double(imread('manWalkIR.jpg'));        % infrared image
-vi = im2double(imread('manWalkVB.jpg'));        % visible image
+ir = im2double(imread("IR_lake_g.bmp"));        % infrared image
+vi = im2double(imread("VIS_lake_r.bmp"));        % visible image
 
 % Convert both to grayscale if RGB
 if size(ir,3) > 1
@@ -38,6 +38,7 @@ mask = mat2gray(mask);
 % ----------------------------
 % Fusion rule (simplified STDFusionNet style)
 % ----------------------------
+
 alpha = 0.7; beta = 0.3;
 fused = mask .* (alpha*ir_gray + beta*vi_gray) + ...
         (1-mask) .* (0.4*ir_gray + 0.6*vi_gray);
@@ -75,13 +76,12 @@ ssim_vi = ssim(fused_gray, vi_resized);
 % Display results
 % ----------------------------
 fprintf('--- Fusion Metrics ---\n');
-fprintf('PSNR (Fused vs IR): %.4f dB\n', psnr_ir);
-fprintf('PSNR (Fused vs VI): %.4f dB\n', psnr_vi);
+
 fprintf('Entropy (Fused): %.4f\n', entropy_fused);
-fprintf('Std Deviation (Fused): %.4f\n', std_fused);
 fprintf('Spatial Frequency (Fused): %.4f\n', SF);
+fprintf('PSNR (Fused vs IR): %.4f dB\n', psnr_ir);
+fprintf('Std Deviation (Fused): %.4f\n', std_fused);
 fprintf('SSIM (Fused vs IR): %.4f\n', ssim_ir);
-fprintf('SSIM (Fused vs VI): %.4f\n', ssim_vi);
 
 % ----------------------------
 % Visualization
