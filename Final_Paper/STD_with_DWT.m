@@ -1,4 +1,5 @@
 clc; clear; close all;
+
 %% Step 1: Load Input Images
 IR = imread('manWalkIR.jpg');
 VIS = imread('manWalkVB.jpg');
