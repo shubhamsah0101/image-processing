@@ -1,4 +1,3 @@
-% std_fusion_metrics.m
 % Saliency-guided fusion of one IR + one visible image
 % Computes PSNR, Entropy, Std Dev, Spatial Frequency, SSIM
 
@@ -23,8 +22,10 @@ else
     vi_gray = vi;
 end
 
+sz = size(vi_gray);
+
 % Resize both to same target size
-targetSize = [256 256];
+targetSize = [sz(1) sz(2)];
 ir_gray = imresize(ir_gray, targetSize);
 vi_gray = imresize(vi_gray, targetSize);
 
@@ -72,6 +73,9 @@ SF = sqrt(RF^2 + CF^2);
 ssim_ir = ssim(fused_gray, ir_resized);
 ssim_vi = ssim(fused_gray, vi_resized);
 
+% correlation coefficient
+c = corr2(fused_gray, ir_resized);
+
 % ----------------------------
 % Display results
 % ----------------------------
@@ -81,7 +85,8 @@ fprintf('Entropy (Fused): %.4f\n', entropy_fused);
 fprintf('Spatial Frequency (Fused): %.4f\n', SF);
 fprintf('PSNR (Fused vs IR): %.4f dB\n', psnr_ir);
 fprintf('Std Deviation (Fused): %.4f\n', std_fused);
-fprintf('SSIM (Fused vs IR): %.4f\n', ssim_ir);
+fprintf('SSIM (Fused vs IR): %.4f\n', c);
+fprintf('CC: %.4f\n', c);
 
 % ----------------------------
 % Visualization

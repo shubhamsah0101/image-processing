@@ -13,8 +13,10 @@ subplot(1,2,2); imshow(VIS, []); title('Visible Image');
 if size(IR,3) == 3, IR = rgb2gray(IR); end
 if size(VIS,3) == 3, VIS = rgb2gray(VIS); end
 
-% Resize visible to IR size
-VIS = imresize(VIS, size(IR));
+sz = size(VIS);
+
+% Resize both to same target size
+targetSize = [sz(1) sz(2)];
 
 % Convert to double
 IR = im2double(IR);
@@ -60,6 +62,9 @@ PSNRval = psnr(fusedUint8, im2uint8(IR));
 % 5. SSIM
 SSIMval = ssim(fusedUint8, im2uint8(IR));
 
+% 6. correlation coefficient
+c = corr2(fusedUint8, Fused);
+
 % Print results
 fprintf('\n=== FUSION METRICS ===\n');
 fprintf('Entropy          : %.4f\n', EntropyVal);
@@ -67,6 +72,7 @@ fprintf('Spatial Frequency: %.4f\n', SF);
 fprintf('PSNR             : %.4f dB\n', PSNRval);
 fprintf('Std Deviation    : %.4f\n', Deviation);
 fprintf('SSIM             : %.4f\n\n', SSIMval);
+fprintf('CC             : %.4f\n\n', c);
 
 % Show fused image
 figure(2)

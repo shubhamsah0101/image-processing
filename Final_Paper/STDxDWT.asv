@@ -1,3 +1,4 @@
+% combined_std_dwt_noidwt.m
 % Combine STD masks + masked DWT + STD fusion, WITHOUT IDWT
 % Final fusion is direct STD fusion (like your first program)
 
@@ -6,8 +7,8 @@ clear; clc; close all;
 %% ----------------------------
 % Load images
 % ----------------------------
-ir = im2double(imread("IR_lake_g.bmp"));
-vi = im2double(imread("VIS_lake_r.bmp"));
+ir = im2double(imread(ir));
+vi = im2double(imread("VIS_meting055_r.bmp"));
 
 if size(ir,3) > 1, ir_gray = rgb2gray(ir); else, ir_gray = ir; end
 if size(vi,3) > 1, vi_gray = rgb2gray(vi); else, vi_gray = vi; end
@@ -15,7 +16,7 @@ if size(vi,3) > 1, vi_gray = rgb2gray(vi); else, vi_gray = vi; end
 sz = size(vi);
 
 % Resize both to same target size
-targetSize = [256 256];
+targetSize = [sz(1) sz(2)];
 %% ----------------------------
 % Saliency + background masks
 % ----------------------------
@@ -104,9 +105,6 @@ SF = sqrt(RF^2 + CF^2);
 ssim_ir = ssim(fused_gray, ir_r);
 ssim_vi = ssim(fused_gray, vi_r);
 
-% correlation coefficient
-c = corr2(fused_gray, ir_r);
-
 %% ----------------------------
 % Results
 % ----------------------------
@@ -116,7 +114,6 @@ fprintf("Spatial Freq: %.4f\n", SF);
 fprintf("PSNR vs IR: %.4f dB\n", psnr_ir);
 fprintf("Std Dev: %.4f\n", std_fused);
 fprintf("SSIM vs IR: %.4f\n", ssim_ir);
-fprintf("CC: %.4f\n", c);
 
 %% ----------------------------
 % Display
