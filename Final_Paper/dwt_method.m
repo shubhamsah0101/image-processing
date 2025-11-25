@@ -37,7 +37,7 @@ HH_fused = HH_IR; if var(HH_VIS(:)) > var(HH_IR(:)), HH_fused = HH_VIS; end
 % ------------- Reconstruct fused image -------------
 Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
 Fused = mat2gray(Fused);
-fusedUint8 = im2uint8(Fused);
+% fusedUint8 = im2uint8(Fused);
 
 % ================= QUALITY METRICS =================
 

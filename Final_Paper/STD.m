@@ -1,171 +1,82 @@
-% clc; clear; close all;
-% 
-% %% Step 1: Load Input Images
-% IR = imread('manWalkIR.jpg');
-% VIS = imread('manWalkVB.jpg');
-% figure, imshow(IR); title('Original Infrared Image');
-% 
-% %% Step 2: Preprocess Infrared Image
-% grayIR = rgb2gray(IR);
-% figure, imhist(grayIR); title('Histogram of Infrared Grayscale Image');
-% 
-% smoothedIR = imgaussfilt(grayIR, 2);  % Gaussian smoothing
-% level = graythresh(smoothedIR);      % Otsu threshold
-% threshold = round(level * 255);
-% fprintf('Computed Otsu Threshold: %d\n', threshold);
-% 
-% binaryMask = smoothedIR > threshold;
-% binaryMask = imclose(binaryMask, strel('disk', 5));   % Fill gaps
-% binaryMask = bwareaopen(binaryMask, 100);             % Remove small fragments
-% 
-% %% Step 3: Apply Mask to IR Image
-% maskedIR = IR;
-% maskedIR(repmat(~binaryMask, [1 1 3])) = 0;
-% figure, imshow(maskedIR); title('Masked IR Image (Auto ROI)');
-% 
-% %% Step 4: Create STM and BM Masks
-% stm = uint8(binaryMask) * 255;
-% bm = uint8(~binaryMask) * 255;
-% 
-% figure;
-% subplot(1,2,1); imshow(stm); title('Salient Target Mask');
-% subplot(1,2,2); imshow(bm); title('Background Mask');
-% 
-% greyI = rgb2gray(IR);
-% result1 = greyI .* uint8(binaryMask);
-% figure, imshow(result1); title('Salient × Infrared');
-% 
-% result2 = greyI .* uint8(~binaryMask);
-% figure, imshow(result2); title('Background × Infrared');
-% 
-% %% Step 5: Visible Image Fusion
-% greyVIS = rgb2gray(VIS);
-% stmDouble = double(stm) / 255;
-% VIS_double = double(VIS);
-% 
-% Id = uint8(stmDouble .* double(greyVIS) + (1 - stmDouble) .* VIS_double);
-% 
-% % Ensure RGB format
-% if size(Id, 3) == 1
-%     Id_rgb = cat(3, Id, Id, Id);
-% else
-%     Id_rgb = Id;
-% end
-% 
-% if size(maskedIR, 3) == 1
-%     masked_rgb = cat(3, maskedIR, maskedIR, maskedIR);
-% else
-%     masked_rgb = maskedIR;
-% end
-% 
-% %% Step 6: Final Fusion
-% fusedFinal = uint8(0.5 * double(masked_rgb) + 0.5 * double(Id_rgb));
-% figure, imshow(fusedFinal); title('Final Fused Output (Auto ROI + Otsu)');
-% en=entropy(fusedFinal);
-% % %% Step 7: Simulated Convolutional Enhancement
-% % conv1x1_1 = fusedFinal;                     % Simulated 1×1 conv
-% % conv3x3 = imgaussfilt(conv1x1_1, 1);        % Simulated 3×3 conv
-% % conv1x1_2 = conv3x3;                        % Simulated 1×1 conv
-% % 
-% % convEnhanced = uint8(0.5 * double(fusedFinal) + 0.5 * double(conv1x1_2));
-% % figure, imshow(convEnhanced); title('Simulated Convolutional Enhancement Output');
-% 
-% %% Step 8: Loss Function Evaluation
-% fusedGray = rgb2gray(fusedFinal);
-% refGray = rgb2gray(VIS);  % Reference can be VIS, IR, or maskedIR
-% 
-% % SSIM Loss
-% ssimVal = ssim(fusedGray, refGray);
-% L_ssim = 1 - ssimVal;
-% 
-% % Gradient Loss
-% Gx_fused = imgradient(fusedGray, 'sobel');
-% Gx_ref = imgradient(refGray, 'sobel');
-% L_grad = mean(abs(double(Gx_fused) - double(Gx_ref)), 'all') / 255;
-% 
-% % Total Loss
-% L_total = L_ssim + L_grad;
-% 
-% fprintf('\n--- Fusion Loss Evaluation ---\n');
-% fprintf('SSIM Loss      : %.4f\n', L_ssim);
-% fprintf('Gradient Loss  : %.4f\n', L_grad);
-% fprintf('Total Loss     : %.4f\n', L_total);
+% -----------------------------------------
+% STDFusionNet Fusion Rule (Simplified)
+% F = S .* IR + (1 - S) .* VI
+% -----------------------------------------
 
+clear; clc; close all;
 
+% ----------------------------
+% Load images
+% ----------------------------
+ir = im2double(imread('IR_lake_g.bmp'));
+vi = im2double(imread('VIS_lake_r.bmp'));
 
+% Convert to grayscale if needed
+if size(ir,3) > 1, ir = rgb2gray(ir); end
+if size(vi,3) > 1, vi = rgb2gray(vi); end
 
+% Resize visible to match IR
+vi = imresize(vi, size(ir));
 
+% ----------------------------
+% Generate saliency map S
+% ----------------------------
+S = imbinarize(mat2gray(ir), 'adaptive');
+S = imgaussfilt(double(S), 2);   % soft saliency
+S = mat2gray(S);
 
+% ----------------------------
+% STDFusionNet Fusion Rule
+% ----------------------------
+fused = S .* ir + (1 - S) .* vi;
+fused = mat2gray(fused);   % normalize
 
+% ----------------------------
+% Compute Metrics
+% ----------------------------
 
-clc; clear; close all;
-%fusion is grayscale only
-%% Step 1: Load Input Images
-IR = imread('manWalkIR.jpg');
-VIS = imread('manWalkVB.jpg');
-figure, imshow(IR); title('Original Infrared Image');
+% Entropy
+entropy_fused = entropy(fused);
 
-%% Step 2: Preprocess Infrared Image
-grayIR = rgb2gray(IR);
-figure, imhist(grayIR); title('Histogram of Infrared Grayscale Image');
-smoothedIR = imgaussfilt(grayIR, 2);         % Gaussian smoothing
-level = graythresh(smoothedIR);              % Otsu threshold
-threshold = round(level * 255);
-fprintf('Computed Otsu Threshold: %d\n', threshold);
-binaryMask = smoothedIR > threshold;
-binaryMask = imclose(binaryMask, strel('disk', 5));   % Fill gaps
-binaryMask = bwareaopen(binaryMask, 100);             % Remove small fragments
+% Standard deviation
+std_fused = std2(fused);
 
-%% Step 3: Apply Mask to IR and Visible Images
-maskedIR = grayIR .* uint8(binaryMask);
-maskedVIS = rgb2gray(VIS) .* uint8(binaryMask);
+% PSNR with respect to IR and visible
+psnr_ir = psnr(fused, ir);
+psnr_vi = psnr(fused, vi);
 
-%% Step 4: Create Backgrounds
-backgroundVIS = rgb2gray(VIS) .* uint8(~binaryMask);
+% Spatial Frequency (SF)
+RF = sqrt(mean(diff(fused,1,1).^2,'all'));  % row frequency
+CF = sqrt(mean(diff(fused,1,2).^2,'all'));  % column frequency
+SF = sqrt(RF^2 + CF^2);
 
-%% Step 5: Salient-region Fusion (Grayscale only!)
-fusedROI = uint8(0.5 * double(maskedIR) + 0.5 * double(maskedVIS));
-fusedFinalGray = fusedROI + backgroundVIS;
+% SSIM
+ssim_ir = ssim(fused, ir);
+ssim_vi = ssim(fused, vi);
 
-figure, imshow(fusedFinalGray, []); title('Final Fused Output (Gray IR + Gray VIS)');
+% Correlation Coefficient (with IR)
+corr_ir = corr2(fused, ir);
 
-%% Step 6: Simulated Convolutional Enhancement
-% conv1x1_1 = fusedFinalGray; % Simulated 1×1 conv
-% conv3x3 = imgaussfilt(conv1x1_1, 1);        % Simulated 3×3 conv
-% conv1x1_2 = conv3x3;                        % Simulated 1×1 conv
-% convEnhanced = uint8(0.5 * double(fusedFinalGray) + 0.5 * double(conv1x1_2));
-% figure, imshow(convEnhanced, []); title('Simulated Convolutional Enhancement Output');
-% en=entropy(fusedFinalGray);
-en = entropy(fusedFinalGray);
+% ----------------------------
+% Display metrics
+% ----------------------------
+fprintf('\n----- Fusion Performance Metrics -----\n');
+fprintf('Entropy: %.4f\n', entropy_fused);
+fprintf('Std Deviation: %.4f\n', std_fused);
+fprintf('Spatial Frequency: %.4f\n', SF);
+fprintf('PSNR (fused vs IR): %.4f dB\n', psnr_ir);
+fprintf('PSNR (fused vs Visible): %.4f dB\n', psnr_vi);
+fprintf('SSIM (fused vs IR): %.4f\n', ssim_ir);
+fprintf('SSIM (fused vs Visible): %.4f\n', ssim_vi);
+fprintf('Correlation Coefficient (fused vs IR): %.4f\n', corr_ir);
 
-fusedUint8 = im2uint8(fusedFinalGray);
-irGrayResized = imresize(rgb2gray(IR), size(fusedUint8));
-irUint8 = im2uint8(irGrayResized);
+% ----------------------------
+% Visualization
+% ----------------------------
+figure('Color','w'); 
+tiledlayout(2,2,'TileSpacing','compact');
 
-ssimVal = ssim(fusedUint8, irUint8);
-psnrVal = psnr(fusedUint8, irUint8);
-
-fprintf('\n--- Fusion Quality Metrics ---\n');
-fprintf('Entropy: %.4f\n', en);
-fprintf('SSIM: %.4f\n', ssimVal);
-fprintf('PSNR: %.4f dB\n', psnrVal);
-%% Step 7: Loss Function Evaluation
-fusedGray = fusedFinalGray;
-refGray = rgb2gray(VIS);  % Reference can be VIS, IR, or maskedIR
-
-% SSIM Loss
-ssimVal = ssim(fusedGray, refGray);
-L_ssim = 1 - ssimVal;
-
-% Gradient Loss
-Gx_fused = imgradient(fusedGray, 'sobel');
-Gx_ref = imgradient(refGray, 'sobel');
-L_grad = mean(abs(double(Gx_fused) - double(Gx_ref)), 'all') / 255;
-
-% Total Loss
-L_total = L_ssim + L_grad;
-
-fprintf('\n--- Fusion Loss Evaluation ---\n');
-fprintf('SSIM Loss      : %.4f\n', L_ssim);
-fprintf('Gradient Loss  : %.4f\n', L_grad);
-fprintf('Total Loss     : %.4f\n', L_total);
+nexttile; imshow(ir, []); title('Infrared Image');
+nexttile; imshow(vi, []); title('Visible Image');
+nexttile; imshow(S, []); title('Saliency Map S');
+nexttile; imshow(fused, []); title('Fused Output (STDFusion Rule)');

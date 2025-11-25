@@ -1,8 +1,7 @@
-clc;clear all;close all;
+clc; clear all; close all;
 
 infra_image = imread("manWalkIR.jpg");
-fused_image = imread("std_with_dwt_result.jpg");  % dwt only
-% fused_image = imread("wavelet_std_result.jpg");   % dwt with STDFusionNet
+fused_image = imread("std_with_dwt_result.jpg");
 
 infra_gray = rgb2gray(infra_image);
 fused_gray = rgb2gray(fused_image);

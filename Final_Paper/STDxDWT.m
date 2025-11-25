@@ -79,7 +79,6 @@ combined = sal_recon + bg_recon;
 fused = salient_mask .* (alpha*ir_gray + beta*vi_gray) + ...
         background_mask .* (0.4*ir_gray + 0.6*vi_gray);
 
-
 % Resize DWT output to match fused image size
 combined = imresize(combined, size(fused));
 

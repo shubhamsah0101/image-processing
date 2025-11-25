@@ -37,12 +37,13 @@ mask = imgaussfilt(double(mask),2);
 mask = mat2gray(mask);
 
 % ----------------------------
-% Fusion rule (simplified STDFusionNet style)
+% Fusion rule 
 % ----------------------------
 
+
 alpha = 0.7; beta = 0.3;
-fused = mask .* (alpha*ir_gray + beta*vi_gray) + ...
-        (1-mask) .* (0.4*ir_gray + 0.6*vi_gray);
+fused = mask .* (alpha*ir_gray + beta*vi_gray) + (1-mask) .* (0.4*ir_gray + 0.6*vi_gray);
+
 
 % ----------------------------
 % Normalize and ensure same size/channels
