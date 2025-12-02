@@ -4,77 +4,91 @@ clc; clear all; close all;
 IR = imread("IR_lake_g.bmp");
 VIS = imread("VIS_lake_r.bmp");
 
-% Show originals
+% Original images display
 figure(1)
 subplot(1,2,1); imshow(IR, []); title('Infrared Image');
 subplot(1,2,2); imshow(VIS, []); title('Visible Image');
 
-% Convert to grayscale if necessary
-if size(IR,3) == 3, IR = rgb2gray(IR); end
-if size(VIS,3) == 3, VIS = rgb2gray(VIS); end
+% Convert to grayscale if required
+if size(IR,3) == 3
+    IR = rgb2gray(IR);
+end
+if size(VIS,3) == 3
+    VIS = rgb2gray(VIS);
+end
 
-sz = size(VIS);
-
-% Resize both to same target size
-targetSize = [sz(1) sz(2)];
+% Resize VIS image to match IR
+[rows, cols] = size(IR);
+VIS = imresize(VIS, [rows cols]);
 
 % Convert to double
-IR = im2double(IR);
+IR  = im2double(IR);
 VIS = im2double(VIS);
 
-% ------------- DWT -------------
-[LL_IR, LH_IR, HL_IR, HH_IR] = dwt2(IR, 'db2', 2);
-[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2', 2);
+% ---- DWT Decomposition ----
+[LL_IR, LH_IR, HL_IR, HH_IR]   = dwt2(IR , 'db2');
+[LL_VIS, LH_VIS, HL_VIS, HH_VIS] = dwt2(VIS, 'db2');
 
-% Fuse LL by averaging
+% ---- Fusion Rules ----
+
+% Approximation – averaging rule
 LL_fused = (LL_IR + LL_VIS) / 2;
 
-% Fuse detail coefficients by variance
+% Variance-based detail coefficient fusion
 LH_fused = LH_IR; if var(LH_VIS(:)) > var(LH_IR(:)), LH_fused = LH_VIS; end
 HL_fused = HL_IR; if var(HL_VIS(:)) > var(HL_IR(:)), HL_fused = HL_VIS; end
 HH_fused = HH_IR; if var(HH_VIS(:)) > var(HH_IR(:)), HH_fused = HH_VIS; end
 
-% ------------- Reconstruct fused image -------------
-Fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
-Fused = mat2gray(Fused);
-% fusedUint8 = im2uint8(Fused);
+% ---- IDWT Reconstruction ----
+fused = idwt2(LL_fused, LH_fused, HL_fused, HH_fused, 'db2');
+fused = imresize(fused, size(IR));
+fused = mat2gray(fused);
+fusedUint8 = im2uint8(fused);
 
-% ================= QUALITY METRICS =================
+% =============================
+% Metrics Calculation
+% =============================
 
-% -------- Ensure fused image matches IR size --------
-Fused = imresize(Fused, size(IR));
-fusedUint8 = im2uint8(Fused);
+% Entropy
+entropy_fused = entropy(fused);
 
-% 1. Entropy
-EntropyVal = entropy(Fused);
+% deviation (your function must exist as deviation_1.m)
+dev = deviation_1(VIS, fused);
 
-% 2. Spatial Frequency
-Fx = diff(Fused,1,2);
-Fy = diff(Fused,1,1);
-SF = sqrt(mean(Fx(:).^2) + mean(Fy(:).^2));
+% PSNR
+% psnr_ir = psnr(fusedUint8, im2uint8(IR));
+psnr_vi = psnr(fusedUint8, im2uint8(VIS));
 
-% 3. Standard Deviation
-Deviation = std(Fused(:));
+% Spatial Frequency (SF)
+RF = sqrt(mean(diff(fused,1,1).^2,'all'));
+CF = sqrt(mean(diff(fused,1,2).^2,'all'));
+SF = sqrt(RF^2 + CF^2);
 
-% 4. PSNR
-PSNRval = psnr(fusedUint8, im2uint8(IR));
+% SSIM
+% ssim_ir = ssim(fusedUint8, im2uint8(IR));
+ssim_vi = ssim(fusedUint8, im2uint8(VIS));
 
-% 5. SSIM
-SSIMval = ssim(fusedUint8, im2uint8(IR));
+% Correlation coefficient
+corr_vi = corr2(fused, VIS);
 
-% 6. correlation coefficient
-c = corr2(fusedUint8, Fused);
+% =============================
+% Display Metrics
+% =============================
+fprintf('\n----- Fusion Performance Metrics -----\n');
 
-% Print results
-fprintf('\n=== FUSION METRICS ===\n');
-fprintf('Entropy          : %.4f\n', EntropyVal);
+
+fprintf('PSNR (fused vs Visible): %.4f dB\n', psnr_vi);
+fprintf('Entropy: %.4f\n', entropy_fused);
 fprintf('Spatial Frequency: %.4f\n', SF);
-fprintf('PSNR             : %.4f dB\n', PSNRval);
-fprintf('Std Deviation    : %.4f\n', Deviation);
-fprintf('SSIM             : %.4f\n\n', SSIMval);
-fprintf('CC             : %.4f\n\n', c);
+fprintf('SSIM (fused vs Visible): %.4f\n', ssim_vi);
+fprintf('Correlation Coefficient (fused vs IR): %.4f\n', corr_vi);
+fprintf('Deviation: %.4f\n', dev);
+% =============================
+% Visualization
+% =============================
+figure('Color','w');
+tiledlayout(2,2,'TileSpacing','compact');
 
-% Show fused image
-figure(2)
-imshow(Fused, []);
-title("Fused Image (Variance-based DWT)");
+nexttile; imshow(IR, []); title('Infrared Image');
+nexttile; imshow(VIS, []); title('Visible Image');
+nexttile; imshow(fused, []); title('Fused Image (Variance + Average Rule)');

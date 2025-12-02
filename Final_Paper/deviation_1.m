@@ -1,19 +1,30 @@
-clc; clear all; close all;
+function deviationValue = deviation_1(IR_image, Fused_image)
 
-infra_image = imread("manWalkIR.jpg");
-fused_image = imread("std_with_dwt_result.jpg");
-
-infra_gray = rgb2gray(infra_image);
-fused_gray = rgb2gray(fused_image);
-
-[m, n] = size(infra_gray);
-
-for i = 1:m
-    for j = 1:n
-        value = abs(double(infra_gray(i, j)) - double(fused_gray(i, j))) ./ double(infra_gray(i, j));
+    % Convert to grayscale if needed
+    if size(IR_image,3) == 3
+        IR_gray = rgb2gray(IR_image);
+    else
+        IR_gray = IR_image;
     end
+
+    if size(Fused_image,3) == 3
+        fused_gray = rgb2gray(Fused_image);
+    else
+        fused_gray = Fused_image;
+    end
+
+    % Convert images to double (0–1)
+    IR_gray = im2double(IR_gray);
+    fused_gray = im2double(fused_gray);
+
+    % Resize fused image if sizes mismatch
+    if ~isequal(size(IR_gray), size(fused_gray))
+        fused_gray = imresize(fused_gray, size(IR_gray));
+    end
+
+    % Compute absolute deviation map
+    DeviationMap = abs(IR_gray - fused_gray);
+
+    % Final deviation value
+    deviationValue = mean(DeviationMap, "all");
 end
-
-final = (1 / (m*n)) * value;
-
-fprintf('Deviation : %e\n', final)

@@ -8,8 +8,8 @@ clear; clc; close all;
 % ----------------------------
 % Load images
 % ----------------------------
-ir = im2double(imread('IR_lake_g.bmp'));
-vi = im2double(imread('VIS_lake_r.bmp'));
+ir = im2double(imread("IR_lake_g.bmp"));
+vi = im2double(imread("VIS_lake_r.bmp"));
 
 % Convert to grayscale if needed
 if size(ir,3) > 1, ir = rgb2gray(ir); end
@@ -38,11 +38,11 @@ fused = mat2gray(fused);   % normalize
 % Entropy
 entropy_fused = entropy(fused);
 
-% Standard deviation
-std_fused = std2(fused);
+% deviation
+dev = deviation_1(vi, fused);
 
 % PSNR with respect to IR and visible
-psnr_ir = psnr(fused, ir);
+% psnr_ir = psnr(fused, ir);
 psnr_vi = psnr(fused, vi);
 
 % Spatial Frequency (SF)
@@ -51,24 +51,23 @@ CF = sqrt(mean(diff(fused,1,2).^2,'all'));  % column frequency
 SF = sqrt(RF^2 + CF^2);
 
 % SSIM
-ssim_ir = ssim(fused, ir);
+% ssim_ir = ssim(fused, ir);
 ssim_vi = ssim(fused, vi);
 
-% Correlation Coefficient (with IR)
-corr_ir = corr2(fused, ir);
+% Correlation Coefficient (with VI)
+corr_vi = corr2(fused, vi);
 
 % ----------------------------
 % Display metrics
 % ----------------------------
 fprintf('\n----- Fusion Performance Metrics -----\n');
-fprintf('Entropy: %.4f\n', entropy_fused);
-fprintf('Std Deviation: %.4f\n', std_fused);
-fprintf('Spatial Frequency: %.4f\n', SF);
-fprintf('PSNR (fused vs IR): %.4f dB\n', psnr_ir);
+
 fprintf('PSNR (fused vs Visible): %.4f dB\n', psnr_vi);
-fprintf('SSIM (fused vs IR): %.4f\n', ssim_ir);
+fprintf('Entropy: %.4f\n', entropy_fused);
+fprintf('Spatial Frequency: %.4f\n', SF);
 fprintf('SSIM (fused vs Visible): %.4f\n', ssim_vi);
-fprintf('Correlation Coefficient (fused vs IR): %.4f\n', corr_ir);
+fprintf('Correlation Coefficient (fused vs VI): %.4f\n', corr_vi);
+fprintf('Deviation: %.4f\n', dev);
 
 % ----------------------------
 % Visualization

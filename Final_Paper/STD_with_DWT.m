@@ -1,94 +1,209 @@
-clc; clear; close all;
+% hybrid_std_dwt_fusion_array.m
+% Hybrid STD + DWT fusion for arrays of IR + VI images (4 pairs)
+% - STDFusion rule applied in DWT subbands (A,H,V,D)
+% - Reconstruct IR_dwt, VI_dwt, and fused DWT image
+% - Final spatial fusion: fused = S .* IR_dwt + (1 - S) .* VI_dwt
+% - Computes Entropy, PSNR, Std, SF, SSIM, Deviation, Correlation
+clear; clc; close all;
 
-%% Step 1: Load Input Images
-IR = imread('manWalkIR.jpg');
-VIS = imread('manWalkVB.jpg');
-figure, imshow(IR); title('Original Infrared Image');
+% ----------------------------
+% INPUT arrays (4 IR + 4 VI)
+% ----------------------------
+ir = {im2double(imread("IR_lake_g.bmp")), im2double(imread("manWalkIR.jpg")), ...
+      im2double(imread("IR_meting016_g.bmp")), im2double(imread("IR_helib_011.bmp"))};
 
-%% Step 2: Preprocess Infrared Image
-grayIR = rgb2gray(IR);
-figure, imhist(grayIR); title('Histogram of Infrared Grayscale Image');
-smoothedIR = imgaussfilt(grayIR, 2);  % Gaussian smoothing
-level = graythresh(smoothedIR);      % Otsu threshold
-threshold = round(level * 255);
-fprintf('Computed Otsu Threshold: %d\n', threshold);
+vi = {im2double(imread("VIS_lake_r.bmp")), im2double(imread("manWalkVB.jpg")), ...
+      im2double(imread("VIS_meting016_r.bmp")), im2double(imread("VIS_helib_011.bmp"))};
 
-binaryMask = smoothedIR > threshold;
-binaryMask = imclose(binaryMask, strel('disk', 5));   % Fill gaps
-binaryMask = bwareaopen(binaryMask, 100);             % Remove small fragments
+numImages = min(length(ir), length(vi)); % expect 4
+targetSize = [256 256];                  % consistent processing size
+waveletType = 'db2';
+eps_small = 1e-10;
 
-%% Step 3: Apply Mask to IR Image
-maskedIR = IR;
-maskedIR(repmat(~binaryMask, [1 1 3])) = 0;
-figure, imshow(maskedIR); title('Masked IR Image (Auto ROI)');
+% Prealloc storage
+fused_images = cell(1, numImages);
+metrics = repmat(struct('psnr_ir',[],'psnr_vi',[],'entropy',[],'std',[],'SF',[],...
+    'ssim_ir',[],'ssim_vi',[],'dev_ir',[],'dev_vi',[],'corr_ir',[],'corr_vi',[]),1,numImages);
 
-%% Step 4: Create STM and BM Masks
-stm = uint8(binaryMask) * 255;
-bm = uint8(~binaryMask) * 255;
+for idx = 1:numImages
+    fprintf('Processing image pair %d/%d...\n', idx, numImages);
+    
+    % ----------------------------
+    % Load and grayscale (simple)
+    % ----------------------------
+    ir_raw = ir{idx};
+    vi_raw = vi{idx};
+    if ndims(ir_raw)==3 && size(ir_raw,3)==3
+        ir_gray = rgb2gray(ir_raw);
+    else
+        ir_gray = ir_raw;
+    end
+    if ndims(vi_raw)==3 && size(vi_raw,3)==3
+        vi_gray = rgb2gray(vi_raw);
+    else
+        vi_gray = vi_raw;
+    end
+    
+    % Resize to target size
+    ir_gray = imresize(ir_gray, targetSize);
+    vi_gray = imresize(vi_gray, targetSize);
+    
+    % Normalize inputs to [0,1]
+    ir_n = mat2gray(ir_gray);
+    vi_n = mat2gray(vi_gray);
+    
+    % ----------------------------
+    % Saliency mask S (from IR)
+    % ----------------------------
+    S = imbinarize(mat2gray(ir_n), 'adaptive');   % binary saliency
+    S = imgaussfilt(double(S), 1.5);              % soften
+    S = mat2gray(S);
+    B = 1 - S;
+    
+    % ----------------------------
+    % DWT of original IR & VI
+    % ----------------------------
+    [LL_ir, LH_ir, HL_ir, HH_ir] = dwt2(ir_n, waveletType);
+    [LL_vi, LH_vi, HL_vi, HH_vi] = dwt2(vi_n, waveletType);
+    
+    % ----------------------------
+    % Resize saliency to subband sizes
+    % (subbands are half-size for single-level dwt2)
+    % ----------------------------
+    S_A = imresize(S, size(LL_ir));
+    S_H = imresize(S, size(LH_ir));
+    S_V = imresize(S, size(HL_ir));
+    S_D = imresize(S, size(HH_ir));
+    B_A = 1 - S_A;
+    B_H = 1 - S_H;
+    B_V = 1 - S_V;
+    B_D = 1 - S_D;
+    
+    % ----------------------------
+    % STDFusion rule inside *all* subbands
+    % F_sub = S_sub .* IR_sub + (1 - S_sub) .* VI_sub
+    % ----------------------------
+    F_A = S_A .* LL_ir + (1 - S_A) .* LL_vi;
+    F_H = S_H .* LH_ir + (1 - S_H) .* LH_vi;
+    F_V = S_V .* HL_ir + (1 - S_V) .* HL_vi;
+    F_D = S_D .* HH_ir + (1 - S_D) .* HH_vi;
+    
+    % ----------------------------
+    % Reconstruct IR_dwt, VI_dwt, and coarse fused DWT image
+    % ----------------------------
+    IR_dwt = idwt2(LL_ir, LH_ir, HL_ir, HH_ir, waveletType);
+    VI_dwt = idwt2(LL_vi, LH_vi, HL_vi, HH_vi, waveletType);
+    F_dwt_coarse = idwt2(F_A, F_H, F_V, F_D, waveletType);
+    
+    % Resize reconstructed DWT images back to original target size
+    IR_dwt = imresize(IR_dwt, size(ir_n));
+    VI_dwt = imresize(VI_dwt, size(ir_n));
+    F_dwt_coarse = imresize(F_dwt_coarse, size(ir_n));
+    
+    % Normalize reconstructions
+    IR_dwt = mat2gray(IR_dwt);
+    VI_dwt = mat2gray(VI_dwt);
+    F_dwt_coarse = mat2gray(F_dwt_coarse);
+    
+    % ----------------------------
+    % FINAL spatial fusion using reconstructed IR_dwt & VI_dwt
+    % fused = S .* IR_dwt + (1 - S) .* VI_dwt
+    % ----------------------------
+    fused_spatial = S .* IR_dwt + (1 - S) .* VI_dwt;
+    
+    % Optionally combine fused_spatial with F_dwt_coarse (hybrid)
+    % The code below uses alpha=0.5 to mix them
+    alpha = 0.5;
+    fused_final = alpha .* fused_spatial + (1 - alpha) .* F_dwt_coarse;
+    
+    fused_gray = mat2gray(fused_final);
+    fused_images{idx} = fused_gray;
+    
+    % ----------------------------
+    % Metrics (consistent normalized refs)
+    % ----------------------------
+    ir_ref = mat2gray(ir_n);
+    vi_ref = mat2gray(vi_n);
+    F = fused_gray;
+    
+    % PSNR
+    psnr_ir = psnr(F, ir_ref);
+    psnr_vi = psnr(F, vi_ref);
 
-figure;
-subplot(1,2,1); imshow(stm); title('Salient Target Mask');
-subplot(1,2,2); imshow(bm); title('Background Mask');
+    % Entropy
+    entropy_fused = entropy(F);
 
-% Salient and background grayscale masked images
-greyI = rgb2gray(IR);
-result1 = greyI .* uint8(binaryMask);
-result2 = greyI .* uint8(~binaryMask);
+    % Std dev
+    std_fused = std2(F);
 
-figure, imshow(result1); title('Salient × Infrared');
-figure, imshow(result2); title('Background × Infrared');
+    % Spatial frequency
+    RF = sqrt(mean(diff(F,1,1).^2,'all'));
+    CF = sqrt(mean(diff(F,1,2).^2,'all'));
+    SF = sqrt(RF^2 + CF^2);
 
-%% Step 5: Apply Single-Level DWT on Salient and Background
-figure(1);
-subplot(1,2,1); imshow(result1, []); title('Salient Region (IR × Mask)');
-subplot(1,2,2); imshow(result2, []); title('Background Region (IR × ~Mask)');
+    % SSIM
+    ssim_ir = ssim(F, ir_ref);
+    ssim_vi = ssim(F, vi_ref);
 
-R1 = im2double(result1);
-R2 = im2double(result2);
+    % Deviation
+    dev_ir = deviation_1(F, ir_ref);
+    dev_vi = deviation_1(F, vi_ref);
 
-[LL_R1, LH_R1, HL_R1, HH_R1] = dwt2(R1, 'db2');
-[LL_R2, LH_R2, HL_R2, HH_R2] = dwt2(R2, 'db2');
+    % Correlation
+    corr_ir = corr2(F, ir_ref);
+    corr_vi = corr2(F, vi_ref);
+    
+    % Store metrics
+    metrics(idx).psnr_ir = psnr_ir;
+    metrics(idx).psnr_vi = psnr_vi;
+    metrics(idx).entropy = entropy_fused;
+    metrics(idx).std = std_fused;
+    metrics(idx).SF = SF;
+    metrics(idx).ssim_ir = ssim_ir;
+    metrics(idx).ssim_vi = ssim_vi;
+    metrics(idx).dev_ir = dev_ir;
+    metrics(idx).dev_vi = dev_vi;
+    metrics(idx).corr_ir = corr_ir;
+    metrics(idx).corr_vi = corr_vi;
+    
+    % Print per-pair summary
+    fprintf('--- Metrics for Pair %d ---\n', idx);
+    fprintf('PSNR vs IR: %.4f dB, PSNR vs VI: %.4f dB\n', psnr_ir, psnr_vi);
+    fprintf('Entropy: %.4f, Std: %.4f, SF: %.4f\n', entropy_fused, std_fused, SF);
+    fprintf('SSIM vs IR: %.4f, SSIM vs VI: %.4f\n', ssim_ir, ssim_vi);
+    fprintf('Dev vs IR: %.6f, Dev vs VI: %.6f\n', dev_ir, dev_vi);
+    fprintf('Corr vs IR: %.4f, Corr vs VI: %.4f\n\n', corr_ir, corr_vi);
+end
 
-figure(2);
-subplot(2,2,1), imshow(LL_R1, []); title('R1 Approximation (LL)');
-subplot(2,2,2), imshow(LH_R1, []); title('R1 Horizontal Detail (LH)');
-subplot(2,2,3), imshow(HL_R1, []); title('R1 Vertical Detail (HL)');
-subplot(2,2,4), imshow(HH_R1, []); title('R1 Diagonal Detail (HH)');
+% ----------------------------
+% Overall summary
+% ----------------------------
+fprintf('--- Overall Summary for %d pairs ---\n', numImages);
 
-figure(3);
-subplot(2,2,1), imshow(LL_R2, []); title('R2 Approximation (LL)');
-subplot(2,2,2), imshow(LH_R2, []); title('R2 Horizontal Detail (LH)');
-subplot(2,2,3), imshow(HL_R2, []); title('R2 Vertical Detail (HL)');
-subplot(2,2,4), imshow(HH_R2, []); title('R2 Diagonal Detail (HH)');
+for idx = 1:numImages
+    fprintf(['Image %d: PSNR_IR=%.4f, PSNR_VI=%.4f, Entropy=%.4f, Std=%.4f, SF=%.4f, ', ...
+             'SSIM_IR=%.4f, SSIM_VI=%.4f, Dev_IR=%.6f, Dev_VI=%.6f, Corr_IR=%.4f, Corr_VI=%.4f\n'], ...
+            idx, metrics(idx).psnr_ir, metrics(idx).psnr_vi, metrics(idx).entropy, metrics(idx).std, ...
+            metrics(idx).SF, metrics(idx).ssim_ir, metrics(idx).ssim_vi, metrics(idx).dev_ir, metrics(idx).dev_vi, ...
+            metrics(idx).corr_ir, metrics(idx).corr_vi);
+end
 
-%% Fusion: Weighted average fusion coefficients (original fusion rule)
-F_LL = 0.6 * LL_R1 + 0.4 * LL_R2;
-F_LH = 0.5 * LH_R1 + 0.5 * LH_R2;
-F_HL = 0.5 * HL_R1 + 0.5 * HL_R2;
-F_HH = 0.5 * HH_R1 + 0.5 * HH_R2;
+% ----------------------------
+% Visualize first pair + montage
+% ----------------------------
+figure('Name','Hybrid STD+DWT (Pair 1)','Color','w');
+tiledlayout(2,3,'TileSpacing','compact');
 
-%% Step 6: Reconstruct fused image using Inverse DWT
-Fused_Result = idwt2(F_LL, F_LH, F_HL, F_HH, 'db2');
-Fused_Result = mat2gray(Fused_Result);
+% show original IR/VI (resized)
+nexttile; imshow(ir_n,[]); title('Infrared (resized)');
+nexttile; imshow(vi_n,[]); title('Visible (resized)');
+nexttile; imshow(S,[]); title('Saliency Map (S)');
+nexttile; imshow(F_dwt_coarse,[]); title('DWT Coarse Fusion (reconstructed)');
+nexttile; imshow(fused_images{1},[]); title('Final Hybrid Fusion');
 
-%% Step 6.1: Post-fusion CLAHE for entropy enhancement
-Fused_Result = adapthisteq(Fused_Result, 'ClipLimit', 0.02);
+% show IR_dwt and VI_dwt for inspection
+nexttile; imshow(IR_dwt,[]); title('IR reconstructed from DWT');
 
-figure;
-imshow(Fused_Result, []);
-title('Enhanced Fused Image after CLAHE');
-
-%% Step 7: Compute Entropy, SSIM, and PSNR
-en = entropy(Fused_Result);
-
-fusedUint8 = im2uint8(Fused_Result);
-irGrayResized = imresize(rgb2gray(IR), size(fusedUint8));
-irUint8 = im2uint8(irGrayResized);
-
-ssimVal = ssim(fusedUint8, irUint8);
-psnrVal = psnr(fusedUint8, irUint8);
-
-fprintf('\n--- Fusion Quality Metrics ---\n');
-fprintf('Entropy: %.4f\n', en);
-fprintf('SSIM: %.4f\n', ssimVal);
-fprintf('PSNR: %.4f dB\n', psnrVal);
+figure('Name','All Fused Images','Color','w');
+montage(fused_images, 'Size', [2 2]);
+title('Montage of Final Fused Outputs');
