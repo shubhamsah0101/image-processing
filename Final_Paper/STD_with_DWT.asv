@@ -13,7 +13,7 @@ ir = {im2double(imread("manWalkIR.jpg")), im2double(imread("IR_helib_011.bmp")),
       im2double(imread("IR_lake_g.bmp")), im2double(imread("IR_meting016_g.bmp"))};
 
 vi = {im2double(imread("manWalkVB.jpg")), im2double(imread("VIS_helib_011.bmp")), ...
-      im2double(imread("VIS_lake_r.bmp")), im2double(imread("VIS_meting016_r.bmp"))};
+      im2double(imread("VIS_lake_r.bmp")), im2double(imread("V))};
 
 numImages = min(length(ir), length(vi)); % expect 4
 targetSize = [256 256];                  % consistent processing size

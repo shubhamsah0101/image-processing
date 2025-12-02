@@ -1,8 +1,8 @@
 clc; clear all; close all;
 
 % Read and preprocess images
-IR = imread("IR_meting016_g.bmp");
-VIS = imread("VIS_meting016_r.bmp");
+IR = imread("IR_helib_011.bmp");
+VIS = imread(vis);
 
 % Original images display
 figure(1)
