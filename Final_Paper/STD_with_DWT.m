@@ -133,9 +133,6 @@ for idx = 1:numImages
     % Entropy
     entropy_fused = entropy(F);
 
-    % Std dev
-    std_fused = std2(F);
-
     % Spatial frequency
     RF = sqrt(mean(diff(F,1,1).^2,'all'));
     CF = sqrt(mean(diff(F,1,2).^2,'all'));
